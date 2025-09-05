@@ -605,9 +605,9 @@ def generate_check_store_pipeline(grammar_list, num_list, output_dir, revised_ne
 
 
 def main():
-    test_grammar_original = "E:\\Microsoft VS Code\\Work Place\\JAP_GPT\\JAP_GPT\\2025_new_db\\new_questions\\test_grammar.docx"
-    revised_output_grammar = "E:\\Microsoft VS Code\\Work Place\\JAP_GPT\\JAP_GPT\\2025_new_db\\new_questions\\grammar_test\\revised_grammar"
-    grammar_output = "E:\\Microsoft VS Code\\Work Place\\JAP_GPT\\JAP_GPT\\2025_new_db\\new_questions\\grammar_test\\grammar_original"
+    test_grammar_original = "docs/test_grammar.docx"
+    revised_output_grammar = "docs/Generated_paper/revised_grammar"
+    grammar_output = "docs/Generated_paper/grammar_original"
 
     grammar_num = extract_numbered_content(test_grammar_original, 1, 4)[0]
     grammar_test = extract_numbered_content(test_grammar_original, 1, 4)[1]
