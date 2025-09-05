@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
-import test_paper_generation
+from Paper_Generator import test_paper_generation
 import mysql.connector
 import os
 
