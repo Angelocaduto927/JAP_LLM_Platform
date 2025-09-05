@@ -1,28 +1,14 @@
 '''Question_Generator'''
 import re
 import os
-import glob
 import time
 import string
-import warnings
-import docx
-import mysql.connector
+
 from docx import Document
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate  
-from langchain.chains import LLMChain   
-from langchain_community.document_loaders import UnstructuredWordDocumentLoader
-from typing import Any
-from openpyxl import Workbook
-from openpyxl.styles import Alignment
-from openpyxl.worksheet.datavalidation import DataValidation
 
-# from jap_paper_revise import produce_new_question_list
-from jap_paper_revise import read_docx_to_string_with_format
-
-from jap_vocabulary_processor import vocabulary_points_revise
 from jap_excel_processor import parse_questions
 from jap_excel_processor import store_questions_to_excel
 from jap_excel_processor import process_word_to_excel
