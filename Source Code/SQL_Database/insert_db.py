@@ -210,7 +210,7 @@ def main():
     question_path = "docs/Test 1 Question Paper.docx"
     right_answer_path = "docs/Test 1 Model Answer.docx"
     #wrong_answer_path = "C:\\Users\\刘宇\\OneDrive - CUHK-Shenzhen\\桌面\\JAP_GPT\\Test1_new\\student paper_test\\1155193734 Test 1.docx"
-    input_test_path = "docs/student paper_test"
+    input_test_path = "docs/student_test_sample"
     sample_output = "docs/new_db_test.docx"
 
     for filepath in glob.glob(os.path.join(input_test_path, "*.docx")):

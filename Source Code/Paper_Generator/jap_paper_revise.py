@@ -476,7 +476,7 @@ def return_paper(question_path, right_answer_path, filename):
 
 question_path = "docs/Test 1 Question Paper.docx"
 right_answer_path = "docs/Test 1 Model Answer.docx"
-wrong_answer_path = "docs/student paper_test/1155193734 Test 1.docx"
+wrong_answer_path = "docs/student_test_sample/1155193734 Test 1.docx"
 
 filename = os.path.splitext(os.path.basename(question_path))[0]
 return_paper(question_path, right_answer_path, filename)
