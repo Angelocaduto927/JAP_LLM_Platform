@@ -606,8 +606,8 @@ def generate_check_store_pipeline(grammar_list, num_list, output_dir, revised_ne
 
 def main():
     test_grammar_original = "docs/test_grammar.docx"
-    revised_output_grammar = "docs/Generated_paper/revised_grammar"
-    grammar_output = "docs/Generated_paper/grammar_original"
+    revised_output_grammar = "docs/Generated_paper/revised_grammar_questions"
+    grammar_output = "docs/Generated_paper/original_grammar_questions"
 
     grammar_num = extract_numbered_content(test_grammar_original, 1, 4)[0]
     grammar_test = extract_numbered_content(test_grammar_original, 1, 4)[1]
