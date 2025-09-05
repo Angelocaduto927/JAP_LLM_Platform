@@ -41,8 +41,8 @@ def get_last_index(knowledge_point):   #knowledge_point = "N4_grammar_1" // "N4_
 #read_N4_Vocabulary_knowledge_point = read_N4_Vocabulary_knowledge_point()
 #read_N4_Grammar_knowledge_point = read_N4_Grammar_knowledge_point()
 
-folder_path = r"D:\JAP_GPT\JAP_GPT\Unprocessed_Excel_Files"
-processed_folder_path = r"D:\JAP_GPT\JAP_GPT\Processed_Excel_Files"
+folder_path = "docs/Excel/Unprocessed_Excel_Files"
+processed_folder_path = "docs/Excel/Processed_Excel_Files"
 
 for file_name in os.listdir(folder_path):
     if file_name.endswith(('.xlsx',)):

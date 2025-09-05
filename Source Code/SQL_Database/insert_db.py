@@ -207,12 +207,12 @@ def save_to_word(students, questions, exam_results, sample_output):
 
 
 def main():
-    question_path = "C:\\Users\\刘宇\\OneDrive - CUHK-Shenzhen\\桌面\\JAP_GPT\\processed test paper with knowledge points\\Test 1 Question Paper.docx"
-    right_answer_path = "C:\\Users\\刘宇\OneDrive - CUHK-Shenzhen\\桌面\\JAP_GPT\\Test1_new\\test 1 paper\\Test 1 Model Answer.docx"
+    question_path = "docs/Test 1 Question Paper.docx"
+    right_answer_path = "docs/Test 1 Model Answer.docx"
     #wrong_answer_path = "C:\\Users\\刘宇\\OneDrive - CUHK-Shenzhen\\桌面\\JAP_GPT\\Test1_new\\student paper_test\\1155193734 Test 1.docx"
-    input_test_path = "C:\\Users\\刘宇\\OneDrive - CUHK-Shenzhen\\桌面\\JAP_GPT\\Test1_new\\student paper_test"
-    sample_output = "C:\\Users\\刘宇\\OneDrive - CUHK-Shenzhen\\桌面\\JAP_GPT\\2025_new_db\\new_db_test.docx"
-    
+    input_test_path = "docs/student paper_test"
+    sample_output = "docs/new_db_test.docx"
+
     for filepath in glob.glob(os.path.join(input_test_path, "*.docx")):
         process_and_save_to_word(question_path, right_answer_path, filepath, sample_output)
 
