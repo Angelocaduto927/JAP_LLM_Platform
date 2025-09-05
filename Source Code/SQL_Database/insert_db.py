@@ -1,8 +1,8 @@
-from jap_paper_revise import return_revised_result
-from jap_paper_revise import return_paper
-from jap_paper_revise import extract_student_id
-from jap_paper_revise import read_name_from_docx
-from jap_paper_revise import read_answers_from_docx
+from Paper_Generator.jap_paper_revise import return_revised_result
+from Paper_Generator.jap_paper_revise import return_paper
+from Paper_Generator.jap_paper_revise import extract_student_id
+from Paper_Generator.jap_paper_revise import read_name_from_docx
+from Paper_Generator.jap_paper_revise import read_answers_from_docx
 import mysql.connector
 import os
 import glob
