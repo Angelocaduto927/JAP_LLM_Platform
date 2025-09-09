@@ -6,8 +6,7 @@ import string
 
 from docx import Document
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate  
+from langchain_openai import ChatOpenAI 
 
 from jap_excel_processor import parse_questions
 from jap_excel_processor import store_questions_to_excel
@@ -440,9 +439,9 @@ def generate_check_store_pipeline(grammar_list, num_list, output_dir, revised_ne
 
 
 def main():
-    test_grammar_original = "JAP_LLM_Platform/docs/test_grammar.docx"
-    revised_output_grammar = "JAP_LLM_Platform/docs/Generated_paper/revised_grammar_questions"
-    grammar_output = "JAP_LLM_Platform/docs/Generated_paper/original_grammar_questions"
+    test_grammar_original = "docs/test_grammar.docx"
+    revised_output_grammar = "docs/Generated_paper/revised_grammar_questions"
+    grammar_output = "docs/Generated_paper/original_grammar_questions"
 
     grammar_num = extract_numbered_content(test_grammar_original, 1, 4)[0]
     grammar_test = extract_numbered_content(test_grammar_original, 1, 4)[1]

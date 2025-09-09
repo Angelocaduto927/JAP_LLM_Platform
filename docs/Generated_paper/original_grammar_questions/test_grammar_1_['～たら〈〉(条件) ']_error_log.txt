@@ -32,3 +32,8 @@ Iteration 2 Errors: [('Multiple correct answers', 'q3(もんだい1), q1(もん�
 Iteration 3 Errors: [('Multiple correct answers', 'q2(もんだい1), q1(もんだい2), q2(もんだい2), q5(もんだい2)'), ('Stem errors', 'q3(もんだい1)')]
 Iteration 4 Errors: [('Multiple correct answers', 'q1(もんだい1)'), ('Stem errors', 'q1(もんだい1)')]
 Iteration 5 Errors: [('Multiple correct answers', 'q1(もんだい1)'), ('Stem errors', 'q3(もんだい1), q6(もんだい1), q9(もんだい1), q5(もんだい2)')]
+Iteration 1 Errors: [('Multiple correct answers', 'q1(もんだい1), q3(もんだい1), q7(もんだい1)'), ('Stem errors', 'q2(もんだい1)')]
+Iteration 2 Errors: [('Multiple correct answers', 'q1(もんだい1), q2(もんだい1), q10(もんだい1), q3(もんだい2)'), ('Stem errors', 'q1(もんだい1), q9(もんだい1), q8(もんだい2)')]
+Iteration 3 Errors: [('Multiple correct answers', 'q2(もんだい1), q3(もんだい1), q7(もんだい1), q9(もんだい1)'), ('Stem errors', 'q1(もんだい1), q9(もんだい1)')]
+Iteration 4 Errors: [('Multiple correct answers', 'q4(もんだい1), q5(もんだい1), q8(もんだい2)'), ('Stem errors', 'q2(もんだい1), q3(もんだい1), q3(もんだい2), q4(もんだい2)')]
+Iteration 5 Errors: [('Multiple correct answers', 'q2(もんだい1), q3(もんだい1), q7(もんだい1), q8(もんだい1), q9(もんだい1), q10(もんだい1), q3(もんだい2), q6(もんだい2), q7(もんだい2), q9(もんだい2), q10(もんだい2)'), ('Stem errors', 'q4(もんだい1), q5(もんだい1), q9(もんだい1), q4(もんだい2)')]
