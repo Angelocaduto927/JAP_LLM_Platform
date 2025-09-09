@@ -1,8 +1,11 @@
+import os
+import sys
 import tkinter as tk
 from tkinter import messagebox
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from Paper_Generator import test_paper_generation
 import mysql.connector
-import os
+
 
 #--------mysql connection--------
 db = mysql.connector.connect(

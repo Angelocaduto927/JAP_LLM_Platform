@@ -7,11 +7,6 @@ import warnings
 import docx
 import mysql.connector
 from docx import Document
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_openai import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate  
-from langchain.chains import LLMChain   
-from langchain_community.document_loaders import UnstructuredWordDocumentLoader
 from typing import Any
 from openpyxl import Workbook
 from openpyxl.styles import Alignment

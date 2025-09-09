@@ -299,7 +299,7 @@ def split_text_with_separators(text, separators):
 def produce_split_question_list(input_file, filename):
     timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
     file_name = f"{filename} {timestamp}.docx"
-    output_file_path = os.path.join("E:\Microsoft VS Code\Work Place\JAP_GPT\JAP_GPT\processed test paper", file_name)
+    output_file_path = os.path.join(processed_question_path, file_name)
     clean_document(input_file,output_file_path)
     #这里clean_document()成功保留原格式，包括下划线粗体等，但下面read_docx_to_string还是将格式drop了
 
@@ -475,6 +475,7 @@ def return_paper(question_path, right_answer_path, filename):
 
 
 question_path = "docs/Test 1 Question Paper.docx"
+processed_question_path = "docs/processed test paper"
 right_answer_path = "docs/Test 1 Model Answer.docx"
 wrong_answer_path = "docs/student_test_sample/1155193734 Test 1.docx"
 

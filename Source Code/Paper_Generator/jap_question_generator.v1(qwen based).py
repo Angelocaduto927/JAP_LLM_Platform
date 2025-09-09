@@ -7,7 +7,6 @@ import string
 from docx import Document
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate  
 
 from jap_excel_processor import parse_questions
 from jap_excel_processor import store_questions_to_excel
