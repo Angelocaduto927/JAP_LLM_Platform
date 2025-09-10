@@ -218,6 +218,18 @@ def api_call_for_error_detection(chain, input_data, max_retries=3, delay=1):
     print("Max retries reached. Giving up.")
     return None
 
+def paper_split_into_list(text):
+    # 将试卷题目分割成列表，方便后续抽取和替换题目进行修改
+    questions = re.findall(
+        r'(Q\d+:\s*もんだい\d+\s*.*?Answer:\s*\d+)',
+        text, re.DOTALL
+    )
+    return questions
+
+def normalize_spaces(text):
+    # 将全角空格替换为半角空格
+    return text.replace('\u3000', ' ')
+
 def normalize_text(text):
     text = text.lower()
     text = text.translate(str.maketrans('', '', string.punctuation))
@@ -231,7 +243,7 @@ def has_multiple_correct_answers(text, llm):
             ("human", 
             """{input_data}\n\n
             Check if any question has **more than one correct answer**. This means that multiple options are valid for the question given its context.\n
-            If at least one question has multiple valid correct answers, respond with the question numbers that potentially have the problem only, the form requirement is number + question type (eg. q1(もんだい1)).\n
+            If at least one question has multiple valid correct answers, respond with the question numbers that potentially have the problem only, the form requirement is number + question type (eg. 'Q8: もんだい1, Q7: もんだい2').\n
             If not, you must return "False" only.\n
             """
             ),
@@ -242,7 +254,7 @@ def has_multiple_correct_answers(text, llm):
     chain = prompt | llm
     result = api_call_for_error_detection(chain, input_data)
     if result.content != "False" and result.content is not None:
-        result = result.content.lower()
+        result = result.content
         return result
     return False
 
@@ -255,7 +267,7 @@ def has_stem_errors(text, llm):
             "- Grammatical mistakes\n"
             "- Unnatural sentence structures\n"
             "- Ambiguous wording\n"
-            "If there is at least one issue in the stems, you must respond with the question numbers that potentially have the problem only, the form requirement is number + question type (eg. q1(もんだい1)).\n"
+            "If there is at least one issue in the stems, you must respond with the question numbers that potentially have the problem only, the form requirement is number + question type (eg. 'Q8: もんだい1, Q7: もんだい2').\n"
             "Otherwise, respond with 'False' only.\n"
             )
         ]
@@ -264,7 +276,7 @@ def has_stem_errors(text, llm):
     input_data = {'input_data': text}
     result = api_call_for_error_detection(chain, input_data)
     if result.content != "False" and result.content is not None:
-        result = result.content.lower()
+        result = result.content
         return result
     return False
 
@@ -302,18 +314,62 @@ def check_for_error(revised_text, llm):
     try:
         Multiple_correct_answers = has_multiple_correct_answers(revised_text, llm)
         if Multiple_correct_answers != False:
-            errors.append(("Multiple correct answers", Multiple_correct_answers))
+            errors.append(["Multiple correct answers", Multiple_correct_answers])
         if has_duplicate_questions(revised_text):
             errors.append("Duplicate questions")
         Stem_question = has_stem_errors(revised_text, llm)
         if Stem_question != False:
-            errors.append(("Stem errors", Stem_question))
+            errors.append(["Stem errors", Stem_question])
         if has_duplicate_options(revised_text):
             errors.append("Duplicate options")
         return errors
     except Exception as e:
         print(f"Error in check_for_error: {e}")
         return ["Unexpected error in check_for_error"]
+
+def extract_wrong_questions(question_list_input, error):
+    errors = error
+    question_list = question_list_input
+    multicorrect_problems_number = []
+    stem_problems_number = []
+    if [q for q in errors if q[0] == "Multiple correct answers"] != []:
+        multicorrect_problems_number = [q for q in errors if q[0] == "Multiple correct answers"][0][1].split(',')
+        multicorrect_problems_number = [q.strip() for q in multicorrect_problems_number]
+    if [q for q in errors if q[0] == "Stem errors"] != []:
+        stem_problems_number = [q for q in errors if q[0] == "Stem errors"][0][1].split(',')
+        stem_problems_number = [q.strip() for q in stem_problems_number]
+    questions_have_both_issues_number = set(multicorrect_problems_number) & set(stem_problems_number)
+    question_have_multicorrect_only_number = set(multicorrect_problems_number) - questions_have_both_issues_number
+    question_have_stemerror_only_number = set(stem_problems_number) - questions_have_both_issues_number
+
+    wrong_questions_list = [['Multiple correct answers problems'], ['Stem error problems'], ['Multiple correct answers and Stem error problems']]
+    for question in question_list:
+        q_match = re.match(r'Q\d+:\s*もんだい\d', question)
+        if not q_match:
+            continue
+        if q_match.group(0) in questions_have_both_issues_number:
+            wrong_questions_list[2].append(question)
+        elif q_match.group(0) in question_have_multicorrect_only_number:
+            wrong_questions_list[0].append(question)
+        elif q_match.group(0) in question_have_stemerror_only_number:
+            wrong_questions_list[1].append(question)
+        else:
+            continue
+    return wrong_questions_list
+
+def combine_revised_questions_into_paper(revised_questions_input, original_text_input):
+    revised_question = revised_questions_input
+    original_text = original_text_input
+    revised_questions = paper_split_into_list(normalize_spaces(revised_question))
+    for revised in revised_questions:
+        q_match = re.match(r'Q\d+:\s*もんだい\d', revised)
+        if not q_match:
+            continue
+        for i, original in enumerate(original_text):
+            if original.startswith(q_match.group(0)):
+                original_text[i] = revised
+                break
+    return original_text
 
 def question_revise_simple(rows, filename, output_dir, revised_newpaper_folder, max_iterations=5, model='qwen3-235b-a22b-thinking-2507', temperature=0.6):
     """
@@ -324,8 +380,7 @@ def question_revise_simple(rows, filename, output_dir, revised_newpaper_folder, 
         [
             ("human", 
             '''
-            You are an experienced Japanese N4/N5 examiner. There is a Japanese multiple-choice test at the end of this message. Some {errors} issues are found in those questions, each error type is provided with the question numbers that potentially have the issues. You are only allowed to modify those questions to fulfill the following requirements. and you must use the modified questions to replace the original questions and return the full revised questions only, without any extra comments or explanations.
-
+            You are an experienced Japanese N4/N5 examiner. There are some Japanese multiple-choice questions at the end of this message. All of the questions have some issues. You can refer to {errors}. 
             Your task is to modify those multiple-choice test questions to meet the following criteria and fix all the issues:
 
             1. No duplicate questions: Ensure that all questions are unique. If a question is repeated or too similar to another, please replace it with a new question with a distinct structure or context. Provide specific suggestions on how to modify repeated questions.
@@ -342,14 +397,15 @@ def question_revise_simple(rows, filename, output_dir, revised_newpaper_folder, 
 
             7. General guidance: Eliminate any ambiguity, revise unclear options, and avoid subjective or culturally biased phrasing. Ensure all questions are at an appropriate difficulty level for the target JLPT level (N4/N5). Avoid complex words or structures outside the typical N4/N5 range.
 
-            8. Output Format: Each question must keep the original format:
-            - Each question must start with `Qx` (e.g., `Q1`, `Q2`...).
+            8. Output Format: Each question must **keep the original format**:
+            - Each question must start with `Qx: もんだいy\n` (x,y are an integer number, where x represents the question number and y represents the question type). The question number x and format type y should remain exactly the same as in the original question being revised. (eg. the question you get is Q3: もんだい2, then the corresponding revised question must also be Q3: もんだい2)
             - Each question must have exactly 4 options (`1` to `4`).
-            - Each question must have an `Answer: x` at the end of it.
+            - Each question must have an `Answer: x` at the end of it (x is an integer number).
             - Each question must contain a pair of parentheses ( ) to indicate the blank where the option should be filled in and must be empty in that parentheses.
             - Do not include any other comments.
             
-            Here are the questions to review and revise as needed:
+            
+            Here are the questions to review and modify:
             {input_data}
             '''
             ),
@@ -358,25 +414,37 @@ def question_revise_simple(rows, filename, output_dir, revised_newpaper_folder, 
     llm_error_check = ChatOpenAI(temperature=0.3, model=model, api_key=os.getenv("DASHSCOPE_API_KEY"),base_url="https://dashscope.aliyuncs.com/compatible-mode/v1", max_tokens=2048, max_retries=5, extra_body={"thinking_budget": 2000})
     chain = prompt_revise | llm_revise
     revised_result = rows
-    errors = check_for_error(revised_result, llm_error_check)
     params = {
-        'input_data': revised_result,
-        'errors': errors
+        'input_data': "",
+        'errors': []
     }
-
+    question_list = paper_split_into_list(normalize_spaces(revised_result))
     for iteration in range(max_iterations):
-        revised_result = api_call_for_paper_revise(chain, params)
-        revised_result = revised_result.content if revised_result else None
-        if revised_result is None:
-            print("Failed to get revised result. Stopping iteration.")
-            break
         errors = check_for_error(revised_result, llm_error_check)
         if not errors:
             print(f"No issues found after {iteration + 1} iterations.")
             break
         print(f"Iteration {iteration + 1}: Detected errors - {errors}")
-        params['input_data'] = revised_result
+        
+        # 提取判断为错误的题目，进行下一轮修订
+        wrong_questions = extract_wrong_questions(question_list, errors)
+        print(f"Questions to be revised: {wrong_questions}")
+        formatted_wrong_questions = '\n'.join(['\n'.join(sublist) for sublist in wrong_questions])
+        params['input_data'] = formatted_wrong_questions
         params['errors'] = errors
+        
+        revised_result = api_call_for_paper_revise(chain, params)
+        revised_result = revised_result.content if revised_result else None
+        if revised_result is None:
+            print("Failed to get revised result. Stopping iteration.")
+            break
+        
+        # 合并题目和文档
+        revised_result = combine_revised_questions_into_paper(revised_result, question_list)
+        revised_result = '\n'.join(revised_result)
+        question_list = paper_split_into_list(normalize_spaces(revised_result))
+        
+        # 保存每次迭代的中间结果和日志
         intermediate_path = os.path.join(output_dir, f"{filename}_iteration_{iteration + 1}.docx")
         output_doc = Document()
         sentences = split_into_sentences(revised_result)
