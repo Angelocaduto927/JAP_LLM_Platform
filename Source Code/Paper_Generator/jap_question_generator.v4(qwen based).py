@@ -3,6 +3,7 @@ import re
 import os
 import time
 import string
+import json
 
 from docx import Document
 from langchain_core.prompts import ChatPromptTemplate
@@ -198,7 +199,7 @@ def api_call_for_paper_revise(chain, input_data, max_retries=3, delay=1):
     retries = 0
     while retries < max_retries:
         try:
-            return chain.invoke({"input_data": input_data["input_data"], "errors": input_data["errors"]})
+            return chain.invoke({"input_data": input_data["input_data"], "errors": input_data["errors"], "comments": input_data["comments"], "knowledge_point": input_data["knowledge_point"]})
         except Exception as e:
             print(f"API call failed: {e}. Retrying in {delay} seconds...")
             retries += 1
@@ -210,7 +211,7 @@ def api_call_for_error_detection(chain, input_data, max_retries=3, delay=1):
     retries = 0
     while retries < max_retries:
         try:
-            return chain.invoke({"input_data": input_data["input_data"]})
+            return chain.invoke({"input_data": input_data["input_data"], "comments": input_data["comments"], "question_list": input_data["question_list"]})
         except Exception as e:
             print(f"API call failed: {e}. Retrying in {delay} seconds...")
             retries += 1
@@ -241,8 +242,8 @@ def sparse_json_return(text):
         json_match = re.search(r'\{.*\}', text, re.DOTALL)
         if json_match:
             json_text = json_match.group(0)
-            question_numbers = re.search(r'question_numbers:\s*(\[[^\]]*\]|"False")', json_text)
-            comments = re.search(r'comments:\s*(\[[^\]]*\])', json_text)
+            question_numbers = re.search(r'"?question_numbers"?:\s*(\[[^\]]*\]|"False")', json_text)
+            comments = re.search(r'"?comments"?:\s*(\[[^\]]*\])', json_text)
             if question_numbers and comments:
                 return question_numbers.group(1), comments.group(1)
             else:
@@ -254,8 +255,13 @@ def sparse_json_return(text):
     except Exception as e:
         print(f"Error parsing JSON: {e}")
         return "False", "[]"
-
-def has_multiple_correct_answers(text, llm, comments, quesiton_list):
+    
+def comments_to_list(comments_str):
+    comments = comments_str.split('\n')
+    comments = [comment.strip().strip('"').strip("'") for comment in comments if comment.strip()]
+    return comments
+    
+def has_multiple_correct_answers(text, llm, comments, question_list):
     prompt = ChatPromptTemplate.from_messages(
         [
             ("system", "You are an experienced Japanese N4/N5 examiner reviewing the following multiple-choice questions:\n\n"),
@@ -274,17 +280,17 @@ def has_multiple_correct_answers(text, llm, comments, quesiton_list):
             If at least one question has multiple valid correct answers, respond with the question numbers that potentially have the problem only and make a short comment (less than 20 words) for each question explaining why it might have multiple correct answers or not.
             **Format requirement**:
             ```json
-            {
+            {{
                 question_numbers: ["Q8: もんだい1", "Q7: もんだい2"],
                 comments:["comment for Q1: もんだい1", "comment for Q2: もんだい1", ..., "comment for Q10: もんだい1", "comment for Q1: もんだい2", "comment for Q2: もんだい2", ..., "comment for Q10: もんだい2"]   
-            }
+            }}
             If there is no multiple correct answer problem for all questions, make a short comment (less than 20 words) for each question explaining why it does not have multiple correct answers.\n
             **Format requirement**:
             ```json
-            {
+            {{
                 question_numbers: "False",
                 comments:["comment for Q1: もんだい1", "comment for Q2: もんだい1", ..., "comment for Q10: もんだい1", "comment for Q1: もんだい2", "comment for Q2: もんだい2", ..., "comment for Q10: もんだい2"],
-            }
+            }}
             Requirements:
             1. Only respond in JSON format as specified above, without any additional text or explanation
             2. Ensure the comments are concise and directly related to the question's context and options.
@@ -296,8 +302,9 @@ def has_multiple_correct_answers(text, llm, comments, quesiton_list):
     input_data = {
         'input_data': text,
         'comments': comments,
-        'question_list': quesiton_list
+        'question_list': question_list,
     }
+    
     chain = prompt | llm
     result = api_call_for_error_detection(chain, input_data)
     if result.content != "False" and result.content is not None:
@@ -327,17 +334,17 @@ def has_stem_errors(text, llm, comments, question_list):
             If there is at least one issue in the stems, you must respond with the question numbers that potentially have the problem onlyand make a short comment (less than 20 words) for each question explaining why it might have stem error or not.
             **Format requirement**:
             ```json
-            {
+            {{
                 question_numbers: ["Q8: もんだい1", "Q7: もんだい2"],
                 comments:["comment for Q1: もんだい1", "comment for Q2: もんだい1", ..., "comment for Q10: もんだい1", "comment for Q1: もんだい2", "comment for Q2: もんだい2", ..., "comment for Q10: もんだい2"]   
-            }
+            }}
             If there is no stem error problem for all questions, make a short comment (less than 20 words) for each question explaining why it does not have stem error problem.\n
             **Format requirement**:
             ```json
-            {
+            {{
                 question_numbers: "False",
                 comments:["comment for Q1: もんだい1", "comment for Q2: もんだい1", ..., "comment for Q10: もんだい1", "comment for Q1: もんだい2", "comment for Q2: もんだい2", ..., "comment for Q10: もんだい2"],
-            }
+            }}
             Requirements:
             1. Only respond in JSON format as specified above, without any additional text or explanation
             2. Ensure the comments are concise and directly related to the question's context and options.
@@ -360,52 +367,65 @@ def has_stem_errors(text, llm, comments, question_list):
 
 def has_duplicate_options(text):
     questions_with_options = re.findall(
-        r'(\d+)\.\s*(.*?)\n(1\.\s*(.*?)\n)(2\.\s*(.*?)\n)(3\.\s*(.*?)\n)(4\.\s*(.*?)\n)',
+        r'(Q\d+:\s*もんだい\d+)\s*(.*?)\n(1\.\s*(.*?))(2\.\s*(.*?))(3\.\s*(.*?))(4\.\s*(.*?)\nAnswer:\s*\d+\n)',
         text, re.DOTALL
     )
-    for question, _, opt1, _, opt2, _, opt3, _, opt4, _ in questions_with_options:
+    duplicate_option_list = []
+    for number, question, _, opt1, _, opt2, _, opt3, _, opt4 in questions_with_options:
         options = {opt1.strip(), opt2.strip(), opt3.strip(), opt4.strip()}
         if len(options) < 4:
             print(f"Duplicate options detected in question {question}: {opt1.strip()}, {opt2.strip()}, {opt3.strip()}, {opt4.strip()}")
-            return True
+            duplicate_option_list.append(number)
+    if duplicate_option_list != []:
+        return duplicate_option_list
     return False
 
 def has_duplicate_questions(text):
     questions = re.findall(
-        r'(\d+)\.\s*(.*?)\n(1\.\s*(.*?)\n)(2\.\s*(.*?)\n)(3\.\s*(.*?)\n)(4\.\s*(.*?)\n)',
+        r'(Q\d+:\s*もんだい\d+)\s*(.*?)\n(1\.\s*(.*?))(2\.\s*(.*?))(3\.\s*(.*?))(4\.\s*(.*?)\nAnswer:\s*\d+\n)',
         text, re.DOTALL
     )
     seen_questions = set()
-    for question, _, opt1, _, opt2, _, opt3, _, opt4, _ in questions:
+    duplicate_questions_list = []
+    for number, question, _, opt1, _, opt2, _, opt3, _, opt4 in questions:
         question_text = normalize_text(question.strip())
         options = {normalize_text(opt1.strip()), normalize_text(opt2.strip()),
                    normalize_text(opt3.strip()), normalize_text(opt4.strip())}
         normalized_question = f"{question_text} - {', '.join(sorted(options))}"
         if normalized_question in seen_questions:
             print(f"Duplicate question detected: {question_text} with options {options}")
-            return True
+            duplicate_questions_list.append(number)
         seen_questions.add(normalized_question)
+    if duplicate_questions_list != []:
+        return duplicate_questions_list
     return False
 
-def check_for_error(revised_text, llm, comments_last_ieration):
+def check_for_error(revised_text, llm, comments_last_ieration, questions_list):
     errors = []
     try:
-        Multiple_correct_answers, comment_mca = sparse_json_return(has_multiple_correct_answers(revised_text, llm, comments_last_ieration))
-        if Multiple_correct_answers != False:
+        Multiple_correct_answers, comment_mca = sparse_json_return(has_multiple_correct_answers(revised_text, llm, comments_last_ieration, questions_list))
+        if comment_mca != "[]":
+            comment_mca = comments_to_list(comment_mca.strip('[]'))
+        if Multiple_correct_answers != "False":
             errors.append(["Multiple correct answers", Multiple_correct_answers])
-        if has_duplicate_questions(revised_text):
-            errors.append("Duplicate questions")
-        Stem_question, comment_se = sparse_json_return(has_stem_errors(revised_text, llm, comments_last_ieration))
-        if Stem_question != False:
+        
+        Duplicate_questions = has_duplicate_questions(revised_text)
+        if Duplicate_questions != False:
+            errors.append(["Duplicate questions", Duplicate_questions])
+        
+        Stem_question, comment_se = sparse_json_return(has_stem_errors(revised_text, llm, comments_last_ieration, questions_list))
+        if Stem_question != "False":
             errors.append(["Stem errors", Stem_question])
-        if has_duplicate_options(revised_text):
-            errors.append("Duplicate options")
+        
+        Duplicate_options = has_duplicate_options(revised_text)
+        if Duplicate_options != False:
+            errors.append(["Duplicate options", Duplicate_options])
         if comment_mca != "[]" and comment_se != "[]":
-            comment = [f"{x}.{y}" for x, y in zip(eval(comment_mca), eval(comment_se))]
+            comment = [f"{x}.{y}" for x, y in zip(comment_mca, comment_se)]
         return errors, comment
     except Exception as e:
         print(f"Error in check_for_error: {e}")
-        return ["Unexpected error in check_for_error"]
+        return ["Unexpected error in check_for_error"],["Unexpected error in check_for_error"]
 
 def extract_wrong_questions(question_list_input, error, comments):
     errors = error
@@ -455,7 +475,7 @@ def combine_revised_questions_into_paper(revised_questions_input, original_text_
                 break
     return original_text
 
-def question_revise_simple(rows, filename, output_dir, revised_newpaper_folder, max_iterations=5, model='qwen3-235b-a22b-thinking-2507', temperature=0.6):
+def question_revise_simple(rows, filename, output_dir, revised_newpaper_folder, knowledge_point, max_iterations=5, model='qwen3-235b-a22b-thinking-2507', temperature=0.6):
     """
     对新生成的日语练习题进行多轮修订和检查，确保题目质量。
     """
@@ -487,9 +507,9 @@ def question_revise_simple(rows, filename, output_dir, revised_newpaper_folder, 
             - Each question must have an `Answer: x` at the end of it (x is an integer number).
             - Each question must contain a pair of parentheses ( ) to indicate the blank where the option should be filled in and must be empty in that parentheses.
             - Do not include any other comments.
-            
-            
-            Here are the questions to review and modify:
+
+
+            Here are the questions to review and modify, modify them to questions for the grammar point: **{knowledge_point}**:
             {input_data}
             Here are the comments for these wrong questions, you should consider them when making your modification:
             {comments}
@@ -505,12 +525,14 @@ def question_revise_simple(rows, filename, output_dir, revised_newpaper_folder, 
         'input_data': "",
         'errors': [],
         'comments': [],
+        'knowledge_point': "",
     }
     question_list = paper_split_into_list(normalize_spaces(revised_result))
     comments = []
     comments_for_check = []
+    wrong_questions = []
     for iteration in range(max_iterations):
-        errors, comments = check_for_error(revised_result, llm_error_check, comments_for_check)
+        errors, comments = check_for_error(revised_result, llm_error_check, comments_for_check, wrong_questions)
         if not errors:
             print(f"No issues found after {iteration + 1} iterations.")
             break
@@ -523,6 +545,7 @@ def question_revise_simple(rows, filename, output_dir, revised_newpaper_folder, 
         params['input_data'] = formatted_wrong_questions
         params['errors'] = errors
         params['comments'] = comments_for_revise
+        params['knowledge_point'] = knowledge_point
         
         revised_result = api_call_for_paper_revise(chain, params)
         revised_result = revised_result.content if revised_result else None
@@ -593,7 +616,7 @@ def generate_check_store_pipeline(grammar_list, num_list, output_dir, revised_ne
         process_and_revise_document(temp_path)
         
         # 调用题目检查与修订流程
-        question_revise_simple(all_questions, f"{filename}_{question_number}_{knowledge_point}", output_dir, revised_newpaper_folder)
+        question_revise_simple(all_questions, f"{filename}_{question_number}_{knowledge_point}", output_dir, revised_newpaper_folder, knowledge_point)
         
         print(f"Finished processing {knowledge_point}. Results stored in {revised_newpaper_folder}")
 
@@ -601,9 +624,9 @@ def generate_check_store_pipeline(grammar_list, num_list, output_dir, revised_ne
 
 
 def main():
-    test_grammar_original = "JAP_LLM_Platform/docs/test_grammar.docx"
-    revised_output_grammar = "JAP_LLM_Platform/docs/Generated_paper/revised_grammar_questions"
-    grammar_output = "JAP_LLM_Platform/docs/Generated_paper/original_grammar_questions"
+    test_grammar_original = "docs/test_grammar.docx"
+    revised_output_grammar = "docs/Generated_paper/revised_grammar_questions"
+    grammar_output = "docs/Generated_paper/original_grammar_questions"
 
     grammar_num = extract_numbered_content(test_grammar_original, 1, 4)[0]
     grammar_test = extract_numbered_content(test_grammar_original, 1, 4)[1]
