@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 Iteration 1 Errors: Stem errors
 Iteration 2 Errors: Stem errors
 Iteration 3 Errors: Stem errors
@@ -89,3 +90,6 @@ Iteration 2 Errors: [('Multiple correct answers', 'q2(もんだい1), q8(もん�
 Iteration 1 Errors: [['Multiple correct answers', '"False"'], ['Stem errors', '"False"']]
 Iteration 2 Errors: [['Multiple correct answers', '"False"'], ['Stem errors', '"False"']]
 Iteration 3 Errors: [['Multiple correct answers', '"False"'], ['Stem errors', '"False"']]
+=======
+Iteration 1 Errors: [['Stem errors', 'Q9: もんだい1']]
+>>>>>>> 02b4233d16b2d9fbea38c2e16d519f7120ee39ac
