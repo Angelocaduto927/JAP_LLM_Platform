@@ -31,7 +31,7 @@ def load_excel_as_text(excel_path: str) -> str:
         
         # 转换为标准格式的文本
         formatted_text = ""
-        for i, qa in enumerate(qa_list, 1):
+        for i, qa in enumerate(qa_list, 0):
             if len(qa) >= 6:  # 确保有足够的字段
                 question_stem = qa[0]  # 题目
                 option1 = qa[1]        # 选项1
@@ -40,7 +40,7 @@ def load_excel_as_text(excel_path: str) -> str:
                 option4 = qa[4]        # 选项4
                 answer = qa[5]         # 答案
                 
-                formatted_text += f"Q{i}: もんだい1\n"
+                formatted_text += f"Q{((i%10)+1)}"
                 formatted_text += f"{question_stem}\n"
                 formatted_text += f"1. {option1} 2. {option2} 3. {option3} 4. {option4}\n"
                 formatted_text += f"Answer: {answer}\n\n"
@@ -433,12 +433,16 @@ def main():
     
     # 定义模型配置
     model_config = {
-        "qwen3-235b-a22b-thinking-2507": {"is_thinking": True},
-        "qwen3-next-80b-a3b-thinking": {"is_thinking": True},
-        "qwen3-next-80b-a3b-instruct": {"is_thinking": False}, 
-        "qwen3-235b-a22b-instruct-2507": {"is_thinking": False},
-        "qwen3-235b-a22b": {"is_thinking": False},
-        "qwen3-30b-a3b-thinking-2507": {"is_thinking": True}
+        "qwen3-max": {"is_thinking": False},
+        "qwen3-max-preview": {"is_thinking": False},
+        "qwen-plus": {"is_thinking": True}, 
+        "qwen3-vl-235b-a22b-instruct": {"is_thinking": False},
+        "qwen-flash": {"is_thinking": True},
+        "qwen3-30b-a3b-instruct-2507": {"is_thinking": False},
+        "qwen-mt-plus": {"is_thinking": False},
+        "qwen3-30b-a3b": {"is_thinking": True},
+        "qwen3-32b": {"is_thinking": True},
+        "qwen3-vl-235b-a22b-thinking": {"is_thinking": True}
     }
     
     available_models = list(model_config.keys())
