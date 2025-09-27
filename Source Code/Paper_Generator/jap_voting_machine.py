@@ -201,12 +201,19 @@ def aggregate_errors(comments: List[Dict], log_file: str = None) -> List:
             
         log_message(f"\nModel {comment['model']} found errors:", log_file)
         for error in comment["errors"]:
-            if not isinstance(error, list):
+            if not isinstance(error, list) or len(error) != 2:
                 continue
                 
             error_type = error[0]  # "Multiple correct answers" or "Stem errors"
-            questions = error[1].split(',')  # Split question numbers
-            questions = [q.strip() for q in questions]  # Clean up whitespace
+            error_content = error[1].strip()  # 去除空白字符
+            
+            # 跳过空字符串
+            if not error_content:
+                log_message(f"- {error_type}: (empty content, skipping)", log_file)
+                continue
+                
+            questions = error_content.split(',')  # Split question numbers
+            questions = [q.strip() for q in questions if q.strip()]  # Clean up whitespace and remove empty
             
             # 为每个问题创建单独的计数
             for question in questions:
@@ -271,5 +278,5 @@ def check_for_error(revised_text, llm, log_file: str = None):
     except Exception as e:
         error_msg = f"Error in check_for_error: {e}"
         log_message(error_msg, log_file)
-        return ["Unexpected error in check_for_error"]
+        return []
 

@@ -6,6 +6,7 @@ import string
 import warnings
 import docx
 import mysql.connector
+import pandas as pd
 from docx import Document
 from typing import Any
 from openpyxl import Workbook
@@ -157,3 +158,60 @@ def process_word_to_excel(doc_filepath, excel_output):
 
         except Exception as e:
             print(f"Error processing {filepath}: {e}")
+
+def parse_excel_to_text(excel_path: str) -> list:
+    """
+    从Excel文件中读取题目数据并返回列表格式
+    
+    Args:
+        excel_path: Excel文件路径
+        
+    Returns:
+        list: 包含题目数据的列表，每个元素为 [题目, 选项1, 选项2, 选项3, 选项4, 答案]
+    """
+    try:
+        # 读取Excel文件
+        df = pd.read_excel(excel_path)
+        
+        qa_list = []
+        
+        for index, row in df.iterrows():
+            # 跳过标题行
+            if index == 0 or pd.isna(row.iloc[1]):
+                continue
+                
+            # 获取题目内容
+            question_content = str(row.iloc[1]) if not pd.isna(row.iloc[1]) else ""
+            
+            # 解析选项 (假设选项在第3列，格式为 "1. 选项1\n2. 选项2\n3. 选项3\n4. 选项4")
+            options_text = str(row.iloc[2]) if not pd.isna(row.iloc[2]) else ""
+            
+            # 提取四个选项
+            options = ["", "", "", ""]
+            if options_text:
+                # 使用正则表达式提取选项
+                option_matches = re.findall(r'(\d+)\.?\s*([^\n\d]+)', options_text)
+                for opt_num, opt_text in option_matches:
+                    opt_index = int(opt_num) - 1
+                    if 0 <= opt_index < 4:
+                        options[opt_index] = opt_text.strip()
+            
+            # 获取答案
+            answer = str(row.iloc[3]) if not pd.isna(row.iloc[3]) else ""
+            
+            # 只有当题目内容不为空时才添加
+            if question_content:
+                qa_list.append([
+                    question_content,
+                    options[0], 
+                    options[1], 
+                    options[2], 
+                    options[3], 
+                    answer
+                ])
+        
+        return qa_list
+        
+    except Exception as e:
+        print(f"Error reading Excel file {excel_path}: {e}")
+        return []

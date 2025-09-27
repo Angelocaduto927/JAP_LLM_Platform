@@ -1,0 +1,174 @@
+format_descriptions = {
+    1:"""[もんだい1: Connector and Conjunction Selection]
+        These items require you to choose expressions that link clauses by showing cause, sequence, or contrast.
+        Examples:
+        1. かれが　手伝って (   )　宿題 (しゅくだい)が終わらなかった.
+            1 もらったから		2 くれなかったから		3 ほしいから		4 ほしかったから  
+            Answer: 2
+        Explanation: Tests the reason (“〜から”) behind the outcome.
+        
+        2. 日よう日は　道が　こむので　(   )。
+            1　月よう日も　こまなかった			2　車で　行くことにした		
+            3　やくそくの　時間に　間に合った		4　月よう日に　行くことにした
+            Answer: 4
+        Explanation: Requires linking a cause (crowded roads) with the consequence (choice of travel mode or time).
+
+        3. 雨が　少ない　(   )、　やさいが　大きくなりません。
+            1　より			2　すぎて		3　ため		4　けど
+            Answer: 3
+        Explanation: Needs a connector that indicates cause or reason.
+    """,
+
+    2:"""[もんだい2: Particle and Case Marker Selection]
+        These questions focus on choosing the correct particles or markers that indicate relationships such as location, means, or quantification.
+        Examples:
+        1. 3時間だけ　仕事を　したら　10,000円　(   )　もらえた。
+            1　し			2　に			3　も			4　で
+            Answer: 3
+        Explanation: Tests which particle correctly links the amount/method.
+
+        2. 子ども	「お母さん、来週　着る　服を　あらって　(   )。」
+	        母	「自分で　あらいなさい。」
+            1　おく			2　ある			3　おいて		4　あって
+            Answer: 3
+        Explanation: Involves the proper form after a compound verb or adverbial expression.
+
+        3.　1か月　(   )　5本　映画を　見ます。
+            1　か			2　を			3　に			4　と
+            Answer: 3
+        Explanation: Focuses on the marker that correctly expresses frequency or count.
+    """,
+
+    3:"""[もんだい3: Verb and Adjective Conjugation/Transformation]
+        These items require the candidate to select the correct conjugated form, negative form, command form, or transformation needed in context.
+        Examples:
+        1.宿題 (しゅくだい) を　したのに、　先生が　(   )。
+            1　来なかった				2　してしまった		
+            3　会わなかった			4　するつもりだった
+            Anawer: 1
+        Explanation: Tests which verb form correctly contrasts action and result.
+
+        2.うちの　子どもは　勉強 (べんきょう) しないで　(   )　ばかりいる。
+            1　あそび		2　あそぶ		3　あそばない		4　あそんで
+            Answer: 4
+        Explanation: Focuses on the proper connective form after a negative (しないで …あそんで).
+
+        3. 今日は　何も　(   )　出かけました。
+            1　食べないで		2　食べて		3　食べなくて		4　食べても
+            Answer: 1
+        Explanation: Demands the correct negative construction with “何も …ない”.
+
+        4.11時だ。　明日も　學校なんだから　子どもは　早く　(   )。
+            1　ねるな		2　ねろ		3　ねすぎ		4　ねそう
+            Answer: 2
+        Explanation: Requires choosing the appropriate command form (e.g., “ねろ”).
+
+        5.手紙 (てがみ) によると、　田中さんは　(   )　そうです。
+            1　元気		2　元気な		3　元気だ		4　元気という
+            Answer: 3
+        Explanation: Involves selecting the form used for reported speech.
+    """,
+
+    4: """[もんだい4: Modal, Volition, and Decision Expressions]
+        These questions test how well you express desires, intentions, possibilities, or final decisions.
+        Examples:
+        1. もし　1000万円　もらったら、　わたしは　いろいろな国を　(   ).
+            1. 旅行したがる       2. 旅行したがっている       3. 旅行したい       4. 旅行したかった
+            Answer: 3
+        Explanation: Requires choosing the expression that shows desire or volition.
+
+        2. わたしは　来年　国へ　帰る　(   ).
+            1. そうだ       2. らしい       3. ようになった       4. ことにした
+            Answer: 4
+        Explanation: Focuses on expressing a decision or planned change.
+
+        3. わたしは　明日　仕事で　遅れる　(   )　から…
+            1. かもしれない       2. そうだ       3. らしい       4. ところだ
+            Answer: 1
+        Explanation: Needs a possibility or tentative marker.
+    """,
+
+    5: """[もんだい5: Comparative and Degree Expressions]
+        These items ask you to select forms that set up comparisons or express degrees or extents.
+        Examples:
+        1. 山田さんも　背が高いが　田中さん　(   )　高くない.
+            1. から       2. ほど       3. なら       4. しか
+            Answer: 2
+        Explanation: Tests the proper comparative structure to indicate difference or limitation.
+
+        2. あの子は　10さいなのに、赤ちゃんの　(   )　です.
+            1. ほう       2. よう       3. こと       4. もの
+            Answer: 2
+        Explanation: Involves choosing the correct comparative form.
+
+        3. きょうの　テストは　先週の　テスト　(   )　むずかしくなかった.
+            1. ほど       2. も       3. までに       4. ばかり
+            Answer: 1
+        Explanation: Requires a degree marker to indicate the extent of difference.
+    """,
+
+    6: """[もんだい6: Special Constructions (Dialogue/Politeness/Requests)]
+        These questions involve selecting forms that fit within conversational contexts or polite requests.
+        Examples:
+        1. すみませんが　父に　何か　あったら　電話を　(   ).
+            1. してくださいませんか       2. してくれてもいいですか       
+            3. してもらいませんか       4. してもらうのがいいですか
+            Answer: 1
+        Explanation: Tests the proper form for making a polite request.
+
+        2. A:「田中さんは　かのじょが　いますか。」
+            B:「いいえ、田中さんは　前の　かのじょと　別れてから、人を好き　(   ).」
+            1. ではありませんでした       2. にならなくなりました       
+            3. でもよくなりました       4. にしなくなりました
+            Answer: 2
+        Explanation: Requires selecting the correct transformation in a conversational exchange.
+
+        3. A:「しゅんくんの　電話番号 (でんわばんごう) を　知っている？」
+            B:「わたしは　(   )　けど、はなさんなら　わかるかもしれない。」
+            1. わからなかった       2. わかっていない       
+            3. 知らない       4. 知っていない
+            Answer: 3
+        Explanation: Conveys partial or uncertain knowledge appropriately in dialogue.
+    """,
+
+    7: """[もんだい7: Potential, Resultative, and Speculative Expressions]
+        These items focus on expressions that show ability (potential), completed actions leading to a result, or unexpected outcomes.
+        Examples:
+        1. にもつは　多くて　このかばんに　(   )　そうもない.
+            1. 入り       2. 入る       3. 入ら       4. 入れない
+            Answer: 1
+        Explanation: Requires the selection of a form that correctly expresses potential or capacity.
+
+        2. 毎日　(   )　ため、目が　わるくなってしまった.
+            1. ゲーム       2. ゲームをしない       
+            3. ゲームをした       4. ゲームがしたい
+            Answer: 3
+        Explanation: Tests expressing a completed habitual action leading to an undesired result.
+
+        3. サッカーの　試合 (しあい) は　中止になると　思っていたら　(   ).
+            1. 行かなかった       2. 行けそうだった       
+            3. することになった       4. 中止になった
+            Answer: 3
+        Explanation: Involves selecting a structure that shows an unexpected change in situation.
+    """,
+
+    8: """[もんだい8: Idiomatic and Simile Expressions]
+        These questions ask you to choose between similar expressions that describe resemblance or appearance.
+        Examples:
+        1. その　指輪 (ゆびわ) は　星 (ほし) の　(   )　ひかっていた.
+            1. みたい       2. らしく       3. ほどに       4. ように
+            Answer: 4
+        Explanation: Focuses on distinguishing between idiomatic expressions like “みたい”, “らしく”, and “ように”.
+    """
+    }
+
+    interference_rules = {
+        1: f"For Connector and Conjunction Selection related to {knowledge_point}, the interference items should be based on the correct grammatical patterns with only minor distortions. For example, if the correct connector is '〜から' (as in 'もらったから'), an interference might slightly alter the form (e.g., 'もらったかー'). Ensure the distractors are very close in form but grammatically off.",
+        2: f"For Particle and Case Marker Selection concerning {knowledge_point}, the interference items should include common errors in using particles. For instance, if the correct usage is 'に' (as in '学校に行きます'), an interference might mistakenly use 'を' ('学校を行きます'). The distractors should be plausible yet clearly incorrect upon careful grammatical review.",
+        3: f"For Verb and Adjective Conjugation/Transformation involving {knowledge_point}, the interference items should mirror the meaning of the correct option but feature incorrect conjugations or transformations. For example, if the correct て-form is '食べて', an interference might be '食べいて'; or if the correct reported speech form is '元気だ', an interference might be '元気で'.",
+        4: f"For Modal, Volition, and Decision Expressions related to {knowledge_point}, the interference items should present errors in expressing desire, intention, or decision. For instance, if the correct form is '旅行したい', an interference might be '旅行したた'; if the decision marker is 'ことにした', an interference might use a mismatched expression that changes the intended nuance.",
+        5: f"For Comparative and Degree Expressions concerning {knowledge_point}, the interference items should include subtle errors in the use of comparatives or degree markers. For example, if the correct comparative structure uses 'ほど', an interference might use a similar but inappropriate marker (like 'から' or 'なら'). The distractors should be close enough to tempt an error but grammatically unsound.",
+        6: f"For Special Constructions (Dialogue/Politeness/Requests) involving {knowledge_point}, the interference items should incorporate common mistakes in honorific language, incorrect politeness levels, or dialogue-specific transformations. For example, if the correct polite request is 'してくださいませんか', an interference might simplify it to 'してください' or overcomplicate it with an unneeded form.",
+        7: f"For Potential, Resultative, and Speculative Expressions related to {knowledge_point}, the interference items should distort the intended meaning by mixing up expressions of ability, result, or speculation. For instance, if the correct option is 'することになった', an interference might be 'することにした'; similarly, if the correct potential form is '入れない', an interference might be '入らない'.",
+        8: f"For Idiomatic and Simile Expressions regarding {knowledge_point}, the interference items should offer choices that are similar in sound or appearance but idiomatically incorrect. For example, if the correct expression is 'ように', an interference might be 'みたいに' when the context demands a nuance that 'ように' provides. The distractors should be semantically close yet grammatically mismatched."
+    }
