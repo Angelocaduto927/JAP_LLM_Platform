@@ -1,5 +1,0 @@
-Iteration 1 Errors: [['Multiple correct answers', 'Q3: もんだい1, Q5: もんだい1'], ['Stem errors', 'Q70: もんだい8']]
-Iteration 2 Errors: [['Multiple correct answers', 'Q6: もんだい1, Q31: もんだい1'], ['Stem errors', 'Q70: もんだい8']]
-Iteration 3 Errors: [['Multiple correct answers', 'Q3: もんだい1, Q6: もんだい1, Q7: もんだい1, Q8: もんだい1, Q33: もんだい4, Q35: もんだい4, Q37: もんだい4, Q39: もんだい4'], ['Stem errors', 'Q8: もんだい1, Q70: もんだい8']]
-Iteration 4 Errors: [['Stem errors', 'Q3: もんだい1, Q6: もんだい1, Q7: もんだい1, Q70: もんだい8']]
-Iteration 5 Errors: [['Multiple correct answers', 'Q3: もんだい1, Q6: もんだい1, Q7: もんだい1'], ['Stem errors', 'Q3: もんだい1, Q7: もんだい1, Q8: もんだい1']]
