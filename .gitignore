@@ -16,7 +16,7 @@ __pycache__/
 docs/Generated_paper/original_grammar_questions/*
 docs/Generated_paper/revised_grammar_questions/*
 docs/Generated_paper/stored_grammar_questions/*
-*.docx
+*.docs
 *.xlsx
 *.txt
 docs/revised_shatin/*

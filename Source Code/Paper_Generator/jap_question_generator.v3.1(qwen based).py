@@ -119,7 +119,7 @@ def has_multiple_correct_answers(text, llm):
             ("human", 
             """{input_data}\n\n
             Check if any question has **more than one correct answer**. This means that multiple options are valid for the question given its context.\n
-            If at least one question has multiple valid correct answers, respond with the question numbers that potentially have the problem only, the form requirement is number + question type (eg. 'Q8: もんだい1, Q7: もんだい2').\n
+            If at least one question has multiple valid correct answers, respond with the question numbers that potentially have the problem only, the form requirement is number + question type (eg. 'Q8: もんだい1, Q7: もんだい2' **questions separated by commas**).\n
             If not, you must return "False" only.\n
             """
             ),
@@ -292,7 +292,8 @@ def excel_revise_simple(excel_path: str, output_dir: str, model: str, is_thinkin
             api_key=os.getenv("DASHSCOPE_API_KEY"),
             base_url="https://dashscope.aliyuncs.com/compatible-mode/v1", 
             max_tokens=2048, 
-            max_retries=5
+            max_retries=5,
+            extra_body={"enable_thinking": False}
         )
     
     prompt_revise = ChatPromptTemplate.from_messages([
@@ -339,7 +340,8 @@ def excel_revise_simple(excel_path: str, output_dir: str, model: str, is_thinkin
             api_key=os.getenv("DASHSCOPE_API_KEY"),
             base_url="https://dashscope.aliyuncs.com/compatible-mode/v1", 
             max_tokens=2048, 
-            max_retries=5
+            max_retries=5,
+            extra_body={"enable_thinking": False}
         )
     
     chain = prompt_revise | llm_revise
@@ -442,7 +444,13 @@ def main():
         "qwen-mt-plus": {"is_thinking": False},
         "qwen3-30b-a3b": {"is_thinking": True},
         "qwen3-32b": {"is_thinking": True},
-        "qwen3-vl-235b-a22b-thinking": {"is_thinking": True}
+        "qwen3-vl-235b-a22b-thinking": {"is_thinking": True},
+        "qwen3-235b-a22b-thinking-2507":{"is_thinking": True},
+        "qwen3-next-80b-a3b-thinking":{"is_thinking": True},
+        "qwen3-next-80b-a3b-instruct":{"is_thinking": False},
+        "qwen3-235b-a22b-instruct-2507":{"is_thinking": False},
+        "qwen3-235b-a22b":{"is_thinking": False},
+        "qwen3-30b-a3b-thinking-2507":{"is_thinking": True}
     }
     
     available_models = list(model_config.keys())
