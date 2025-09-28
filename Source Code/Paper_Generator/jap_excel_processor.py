@@ -177,11 +177,21 @@ def parse_excel_to_text(excel_path: str) -> list:
         
         for index, row in df.iterrows():
             # 跳过标题行
-            if index == 0 or pd.isna(row.iloc[1]):
+            if pd.isna(row.iloc[1]):
                 continue
-                
             # 获取题目内容
+            question_index = str(row.iloc[0]) if not pd.isna(row.iloc[0]) else ""
+            
             question_content = str(row.iloc[1]) if not pd.isna(row.iloc[1]) else ""
+            match = re.search(r': もんだい\d+', question_content)
+            if match:
+                mondai_str = match.group(0)  # 匹配到的内容
+                question_content = question_content.replace(mondai_str, '', 1).strip()  # 删除并去除首尾空格
+            else:
+                mondai_str = ''
+                question_content = question_content.strip()
+            
+            question_index = question_index.strip()+mondai_str
             
             # 解析选项 (假设选项在第3列，格式为 "1. 选项1\n2. 选项2\n3. 选项3\n4. 选项4")
             options_text = str(row.iloc[2]) if not pd.isna(row.iloc[2]) else ""
@@ -202,6 +212,7 @@ def parse_excel_to_text(excel_path: str) -> list:
             # 只有当题目内容不为空时才添加
             if question_content:
                 qa_list.append([
+                    question_index,
                     question_content,
                     options[0], 
                     options[1], 

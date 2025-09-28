@@ -28,19 +28,21 @@ def load_excel_as_text(excel_path: str) -> str:
     try:
         # 使用现有的parse_excel_to_text函数或实现新的解析逻辑
         qa_list = parse_excel_to_text(excel_path)
+        print(len(qa_list))
         
         # 转换为标准格式的文本
         formatted_text = ""
         for i, qa in enumerate(qa_list, 0):
-            if len(qa) >= 6:  # 确保有足够的字段
-                question_stem = qa[0]  # 题目
-                option1 = qa[1]        # 选项1
-                option2 = qa[2]        # 选项2  
-                option3 = qa[3]        # 选项3
-                option4 = qa[4]        # 选项4
-                answer = qa[5]         # 答案
-                
-                formatted_text += f"Q{((i%10)+1)}"
+            if len(qa) >= 7:  # 确保有足够的字段
+                question_number = qa[0] #题号
+                question_stem = qa[1]  # 题干
+                option1 = qa[2]        # 选项1
+                option2 = qa[3]        # 选项2  
+                option3 = qa[4]        # 选项3
+                option4 = qa[5]        # 选项4
+                answer = qa[6]         # 答案
+
+                formatted_text += f"{question_number}"
                 formatted_text += f"{question_stem}\n"
                 formatted_text += f"1. {option1} 2. {option2} 3. {option3} 4. {option4}\n"
                 formatted_text += f"Answer: {answer}\n\n"
