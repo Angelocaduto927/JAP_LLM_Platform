@@ -1,4 +1,6 @@
 '''Question_Generator v3.1 - Revision Papers Comparison'''
+
+# 在开始全新一轮数量统计前，记得删去旧的model_comparison_summary文件夹
 import re
 import os
 import time
@@ -73,6 +75,15 @@ def paper_comparison(original_paper_path: str, revised_paper_path: str):
         print(f"Error during paper comparison: {e}")
         return [], 0
 
+def clear_folder(folder_path):
+    for filename in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, filename)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+        elif os.path.isdir(file_path):
+            clear_folder(file_path)
+            os.rmdir(file_path)
+
 
 # ---------------------------
 # 批处理函数
@@ -102,19 +113,35 @@ def batch_process_excel_files(input_dir_origin: str, input_dir_revised: str, out
         print(f"Processing: {excel_file}")
         print(f"{'='*50}")
         
+        saving_path = os.path.join(output_dir, f"{excel_file}")
+        
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        
         original_paper_path = os.path.join(input_dir_origin, excel_file)
         latest_file = find_latest_iteration_file(os.path.splitext(excel_file)[0], input_dir_revised)
         if latest_file == None:
             print(f"No revised file found for {excel_file} in {input_dir_revised}, skipping...")
+            
+            if not os.path.exists(saving_path):
+                wb = Workbook()
+                ws = wb.active
+                ws.append(["Model", "Difference Count", "Differences"])
+            else:
+                wb = load_workbook(saving_path)
+                ws = wb.active
+            ws.append([model, 0, ""])
+            wb.save(saving_path)
+            
             continue
         revised_paper_path = os.path.join(input_dir_revised, latest_file)
         
         difference , num = paper_comparison(original_paper_path, revised_paper_path)
         
-        saving_path = os.path.join(output_dir, f"{excel_file}")
-        
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+        '''
+        if os.path.exists(output_dir):
+            clear_folder(output_dir)
+        '''
 
         if not os.path.exists(saving_path):
             wb = Workbook()

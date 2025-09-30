@@ -123,6 +123,8 @@ def has_multiple_correct_answers(text, llm):
             Check if any question has **more than one correct answer**. This means that multiple options are valid for the question given its context.\n
             If at least one question has multiple valid correct answers, respond with the question numbers that potentially have the problem only, the form requirement is number + question type (eg. 'Q8: もんだい1, Q7: もんだい2' **questions separated by commas**).\n
             If not, you must return "False" only.\n
+            
+            Make sure the number of questions remains exactly the same as the input and the question index (the Qx: もんだいy part) for each question is unchanged.
             """
             ),
         ]
@@ -145,6 +147,7 @@ def has_stem_errors(text, llm):
             "- Ambiguous wording\n"
             "If there is at least one issue in the stems, you must respond with the question numbers that potentially have the problem only, the form requirement is number + question type (eg. 'Q8: もんだい1, Q7: もんだい2').\n"
             "Otherwise, respond with 'False' only.\n"
+            "Make sure the number of questions remains exactly the same as the input and the question index (the Qx: もんだいy part) for each question is unchanged."
             )
         ]
     )
@@ -249,6 +252,15 @@ def combine_revised_questions_into_paper(revised_questions_input, original_text_
                 break
     return original_text
 
+def clear_folder(folder_path):
+    for filename in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, filename)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+        elif os.path.isdir(file_path):
+            clear_folder(file_path)
+            os.rmdir(file_path)
+
 # ---------------------------
 # 主要修订函数（Excel版本）
 # ---------------------------
@@ -317,6 +329,8 @@ def excel_revise_simple(excel_path: str, output_dir: str, model: str, is_thinkin
         - Each question must have an `Answer: x` at the end.
         - Each question must contain empty parentheses ( ) for the blank.
         - Do not include any other comments.
+        
+        9. make sure the number of questions remains exactly the same as the input and the question index (the Qx: もんだいy part) for each question is unchanged.
         
         Here are the questions to review and modify:
         {input_data}
@@ -417,6 +431,9 @@ def batch_process_excel_files(input_dir: str, output_dir: str, model: str, is_th
     """
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+        
+    if os.path.exists(output_dir):
+        clear_folder(output_dir)
     
     # 查找所有Excel文件
     excel_files = [f for f in os.listdir(input_dir) if f.endswith('.xlsx') and not f.startswith('~$')]
