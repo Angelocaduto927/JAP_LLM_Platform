@@ -5,6 +5,7 @@ import re
 import os
 import time
 import string
+import pandas as pd
 from openpyxl import Workbook, load_workbook
 
 from docx import Document
@@ -46,6 +47,8 @@ def paper_comparison(original_paper_path: str, revised_paper_path: str):
         original_list = parse_excel_to_text(original_paper_path)
         revised_list = parse_excel_to_text(revised_paper_path)
 
+        list_record = ["0"]*len(original_list)
+        
         if not original_list or not revised_list:
             print(f"Failed to parse questions from one of the files: {original_paper_path} or {revised_paper_path}")
             return [], 0
@@ -68,12 +71,21 @@ def paper_comparison(original_paper_path: str, revised_paper_path: str):
                 continue
             if orig[1] != rev[1] or orig[2] != rev[2] or orig[3] != rev[3] or orig[4] != rev[4] or orig[5] != rev[5] or orig[6] != rev[6]:
                 difference.append(f"{orig[0]}")
+                match = re.match(r'Q(\d+): もんだい(\d+)', orig[0])
+                if match:
+                    question_num = match.group(1)
+                    problem_num = match.group(2)
+                    list_record[(int(problem_num)-1)*10+int(question_num)-1] = "1"
+                else:
+                    print(f"Unexpected question format: {orig[0]}")
                 num += 1
-            
-        return difference, num
+
+        string_record = "".join(list_record)
+        
+        return difference, num, string_record
     except Exception as e:
         print(f"Error during paper comparison: {e}")
-        return [], 0
+        return [], 0, "0"
 
 def clear_folder(folder_path):
     for filename in os.listdir(folder_path):
@@ -119,6 +131,8 @@ def batch_process_excel_files(input_dir_origin: str, input_dir_revised: str, out
             os.makedirs(output_dir)
         
         original_paper_path = os.path.join(input_dir_origin, excel_file)
+        orig_len = len(parse_excel_to_text(original_paper_path))
+        
         latest_file = find_latest_iteration_file(os.path.splitext(excel_file)[0], input_dir_revised)
         if latest_file == None:
             print(f"No revised file found for {excel_file} in {input_dir_revised}, skipping...")
@@ -130,28 +144,38 @@ def batch_process_excel_files(input_dir_origin: str, input_dir_revised: str, out
             else:
                 wb = load_workbook(saving_path)
                 ws = wb.active
-            ws.append([model, 0, ""])
+            ws.append([model, 0, "", "0"*orig_len])
             wb.save(saving_path)
             
             continue
         revised_paper_path = os.path.join(input_dir_revised, latest_file)
         
-        difference , num = paper_comparison(original_paper_path, revised_paper_path)
+        difference , num, string_record = paper_comparison(original_paper_path, revised_paper_path)
         
         '''
         if os.path.exists(output_dir):
             clear_folder(output_dir)
         '''
-
+        feedback_path = os.path.join("docs/paper_with_feedback/question_index", f"{os.path.splitext(excel_file)[0]} - with HO's Comments.xlsx")
         if not os.path.exists(saving_path):
             wb = Workbook()
             ws = wb.active
-            ws.append(["Model", "Difference Count", "Differences"])
+            ws.append(["Model", "Difference Number", "Differences", "String", "Correct Modification Number", "Correct Rate"])
         else:
             wb = load_workbook(saving_path)
             ws = wb.active
-        ws.append([model, num, ", ".join(difference)])
+            
+        if not os.path.exists(feedback_path):
+            ws.append([model, num, ", ".join(difference), string_record, "NA", "NA"])
+        else:
+            df = pd.read_excel(feedback_path)
+            feedback_string = df.iloc[0, 1]
+            bitwise_xor = int(feedback_string, 2) ^ int(string_record, 2)
+            bitwise_xor_str = bin(bitwise_xor)[2:].zfill(orig_len)
+            ws.append([model, num, ", ".join(difference), string_record, bitwise_xor_str.count("1"), bitwise_xor_str.count("1")/orig_len])
         wb.save(saving_path)
+        
+            
             
 def main():
     """主函数 - Excel比对模式"""

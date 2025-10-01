@@ -28,7 +28,6 @@ def load_excel_as_text(excel_path: str) -> str:
     try:
         # 使用现有的parse_excel_to_text函数或实现新的解析逻辑
         qa_list = parse_excel_to_text(excel_path)
-        print(len(qa_list))
         
         # 转换为标准格式的文本
         formatted_text = ""
