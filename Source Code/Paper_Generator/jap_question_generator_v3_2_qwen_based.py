@@ -172,7 +172,7 @@ def batch_process_excel_files(input_dir_origin: str, input_dir_revised: str, out
             feedback_string = df.iloc[0, 1]
             bitwise_xor = int(feedback_string, 2) ^ int(string_record, 2)
             bitwise_xor_str = bin(bitwise_xor)[2:].zfill(orig_len)
-            ws.append([model, num, ", ".join(difference), string_record, bitwise_xor_str.count("1"), bitwise_xor_str.count("1")/orig_len])
+            ws.append([model, num, ", ".join(difference), string_record, bitwise_xor_str.count("0"), bitwise_xor_str.count("0")/orig_len])
         wb.save(saving_path)
         
             
