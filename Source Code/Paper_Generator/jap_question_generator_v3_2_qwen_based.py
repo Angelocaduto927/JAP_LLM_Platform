@@ -134,6 +134,7 @@ def batch_process_excel_files(input_dir_origin: str, input_dir_revised: str, out
         orig_len = len(parse_excel_to_text(original_paper_path))
         
         latest_file = find_latest_iteration_file(os.path.splitext(excel_file)[0], input_dir_revised)
+        '''
         if latest_file == None:
             print(f"No revised file found for {excel_file} in {input_dir_revised}, skipping...")
             
@@ -148,10 +149,16 @@ def batch_process_excel_files(input_dir_origin: str, input_dir_revised: str, out
             wb.save(saving_path)
             
             continue
-        revised_paper_path = os.path.join(input_dir_revised, latest_file)
+        '''
         
-        difference , num, string_record = paper_comparison(original_paper_path, revised_paper_path)
-        
+        if latest_file != None:
+            revised_paper_path = os.path.join(input_dir_revised, latest_file)
+            difference , num, string_record = paper_comparison(original_paper_path, revised_paper_path)
+        else:
+            print(f"No revised file found for {excel_file} in {input_dir_revised}, skipping...")
+            difference = []
+            num = 0
+            string_record = "0"*orig_len
         '''
         if os.path.exists(output_dir):
             clear_folder(output_dir)
