@@ -153,8 +153,14 @@ def batch_process_excel_files(input_dir_origin: str, input_dir_revised: str, out
         '''
         revised_paper_path = os.path.join(input_dir_revised, latest_file)
         
-        difference , num, string_record = paper_comparison(original_paper_path, revised_paper_path)
-        
+        if latest_file != None:
+            revised_paper_path = os.path.join(input_dir_revised, latest_file)
+            difference , num, string_record = paper_comparison(original_paper_path, revised_paper_path)
+        else:
+            print(f"No revised file found for {excel_file} in {input_dir_revised}, skipping...")
+            difference = []
+            num = 0
+            string_record = "0"*orig_len
         '''
         if os.path.exists(output_dir):
             clear_folder(output_dir)
@@ -176,6 +182,7 @@ def batch_process_excel_files(input_dir_origin: str, input_dir_revised: str, out
             bitwise_xor = int(feedback_string, 2) ^ int(string_record, 2)
             bitwise_xor_str = bin(bitwise_xor)[2:].zfill(orig_len)
             ws.append([model, num, ", ".join(difference), string_record, bitwise_xor_str.count("0"), bitwise_xor_str.count("0")/orig_len])
+
         wb.save(saving_path)
         
             
