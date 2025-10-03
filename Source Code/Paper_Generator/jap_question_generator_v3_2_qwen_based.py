@@ -17,7 +17,7 @@ from jap_excel_processor import store_questions_to_excel
 from jap_excel_processor import process_word_to_excel
 
 
-
+'''
 def find_latest_iteration_file(origin_paper: str, input_dir_revised: str):
     """_summary_
 
@@ -30,6 +30,7 @@ def find_latest_iteration_file(origin_paper: str, input_dir_revised: str):
     if not files:
         return None
     return max(files, key=lambda x: int(re.search(r'iteration_(\d+)\.xlsx$', x).group(1)))
+'''
 
 def paper_comparison(original_paper_path: str, revised_paper_path: str):
     """_summary_
@@ -69,7 +70,7 @@ def paper_comparison(original_paper_path: str, revised_paper_path: str):
             if orig[0] != rev[0]:
                 print(f"Question {i+1} number mismatch: original ({orig[0]}) vs revised ({rev[0]})")
                 continue
-            if orig[1] != rev[1] or orig[2] != rev[2] or orig[3] != rev[3] or orig[4] != rev[4] or orig[5] != rev[5] or orig[6] != rev[6]:
+            if orig[1] != rev[1] or orig[2] != rev[2] or orig[3] != rev[3] or orig[4] != rev[4] or orig[5] != rev[5]:
                 difference.append(f"{orig[0]}")
                 match = re.match(r'Q(\d+): もんだい(\d+)', orig[0])
                 if match:
@@ -133,7 +134,8 @@ def batch_process_excel_files(input_dir_origin: str, input_dir_revised: str, out
         original_paper_path = os.path.join(input_dir_origin, excel_file)
         orig_len = len(parse_excel_to_text(original_paper_path))
         
-        latest_file = find_latest_iteration_file(os.path.splitext(excel_file)[0], input_dir_revised)
+        latest_file = f"{os.path.splitext(excel_file)[0]}_revised.xlsx"
+        '''
         if latest_file == None:
             print(f"No revised file found for {excel_file} in {input_dir_revised}, skipping...")
             
@@ -148,6 +150,7 @@ def batch_process_excel_files(input_dir_origin: str, input_dir_revised: str, out
             wb.save(saving_path)
             
             continue
+        '''
         revised_paper_path = os.path.join(input_dir_revised, latest_file)
         
         difference , num, string_record = paper_comparison(original_paper_path, revised_paper_path)
@@ -172,54 +175,57 @@ def batch_process_excel_files(input_dir_origin: str, input_dir_revised: str, out
             feedback_string = df.iloc[0, 1]
             bitwise_xor = int(feedback_string, 2) ^ int(string_record, 2)
             bitwise_xor_str = bin(bitwise_xor)[2:].zfill(orig_len)
-            ws.append([model, num, ", ".join(difference), string_record, bitwise_xor_str.count("1"), bitwise_xor_str.count("1")/orig_len])
+            ws.append([model, num, ", ".join(difference), string_record, bitwise_xor_str.count("0"), bitwise_xor_str.count("0")/orig_len])
         wb.save(saving_path)
         
             
             
-def main():
+def main(model_index_input = None):
     """主函数 - Excel比对模式"""
-    
-    # 定义模型配置
+    #定义模型配置
     model_config = {
-        "qwen3-max": {"is_thinking": False},
-        "qwen3-max-preview": {"is_thinking": False},
-        "qwen-plus": {"is_thinking": True}, 
-        "qwen3-vl-235b-a22b-instruct": {"is_thinking": False},
-        "qwen-flash": {"is_thinking": True},
-        "qwen3-30b-a3b-instruct-2507": {"is_thinking": False},
-        "qwen-mt-plus": {"is_thinking": False},
-        "qwen3-30b-a3b": {"is_thinking": True},
-        "qwen3-32b": {"is_thinking": True},
-        "qwen3-vl-235b-a22b-thinking": {"is_thinking": True},
-        "qwen3-235b-a22b-thinking-2507":{"is_thinking": True},
-        "qwen3-next-80b-a3b-thinking":{"is_thinking": True},
-        "qwen3-next-80b-a3b-instruct":{"is_thinking": False},
-        "qwen3-235b-a22b-instruct-2507":{"is_thinking": False},
-        "qwen3-235b-a22b":{"is_thinking": False},
-        "qwen3-30b-a3b-thinking-2507":{"is_thinking": True}
-    }
+            "qwen3-max": {"is_thinking": False},
+            "qwen3-max-preview": {"is_thinking": False},
+            "qwen-plus": {"is_thinking": True}, 
+            "qwen3-vl-235b-a22b-instruct": {"is_thinking": False},
+            "qwen-flash": {"is_thinking": True},
+            "qwen3-30b-a3b-instruct-2507": {"is_thinking": False},
+            "qwen-mt-plus": {"is_thinking": False},
+            "qwen3-30b-a3b": {"is_thinking": True},
+            "qwen3-32b": {"is_thinking": True},
+            "qwen3-vl-235b-a22b-thinking": {"is_thinking": True},
+            "qwen3-235b-a22b-thinking-2507":{"is_thinking": True},
+            "qwen3-next-80b-a3b-thinking":{"is_thinking": True},
+            "qwen3-next-80b-a3b-instruct":{"is_thinking": False},
+            "qwen3-235b-a22b-instruct-2507":{"is_thinking": False},
+            "qwen3-235b-a22b":{"is_thinking": False},
+            "qwen3-30b-a3b-thinking-2507":{"is_thinking": True}
+        }
     
-    available_models = list(model_config.keys())
-    
-    print("Available models:")
-    for i, model in enumerate(available_models, 1):
-        model_type = "Thinking" if model_config[model]["is_thinking"] else "Standard"
-        print(f"{i}. {model} [{model_type}]")
-    
-    # 选择模型
-    while True:
-        try:
-            choice = input(f"\nPlease select a model (1-{len(available_models)}): ").strip()
-            model_index = int(choice) - 1
-            if 0 <= model_index < len(available_models):
-                selected_model = available_models[model_index]
-                is_thinking_model = model_config[selected_model]["is_thinking"]
-                break
-            else:
-                print("Invalid choice. Please try again.")
-        except ValueError:
-            print("Please enter a valid number.")
+    if model_index_input is not None:
+        selected_model = model_index_input
+        is_thinking_model = model_config[selected_model]["is_thinking"]
+    else:
+        available_models = list(model_config.keys())
+        
+        print("Available models:")
+        for i, model in enumerate(available_models, 1):
+            model_type = "Thinking" if model_config[model]["is_thinking"] else "Standard"
+            print(f"{i}. {model} [{model_type}]")
+        
+        # 选择模型
+        while True:
+            try:
+                choice = input(f"\nPlease select a model (1-{len(available_models)}): ").strip()
+                model_index = int(choice) - 1
+                if 0 <= model_index < len(available_models):
+                    selected_model = available_models[model_index]
+                    is_thinking_model = model_config[selected_model]["is_thinking"]
+                    break
+                else:
+                    print("Invalid choice. Please try again.")
+            except ValueError:
+                print("Please enter a valid number.")
     
     print(f"\nSelected model: {selected_model}")
     print(f"Model type: {'Thinking mode' if is_thinking_model else 'Standard mode'}")
