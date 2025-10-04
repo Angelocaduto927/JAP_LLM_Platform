@@ -1,6 +1,7 @@
 import re
 import os
 import shutil
+import time
 from openpyxl import Workbook, load_workbook
 from jap_excel_processor import parse_excel_to_text
 
@@ -42,6 +43,7 @@ def combine_excel_files(selected_model, is_thinking_model, dir, split_number):
                     question[0] = match.group(1)
                     question[2] = "1. "+question[2]+" 2. "+question[3]+" 3. "+question[4]+" 4. "+question[5]
                     question[3] = question[6]
+                    question = question[:4]
             full_qa.extend(qa)
         tempt_path = os.path.join(dir, "tempt")
         if not os.path.exists(tempt_path):
@@ -53,6 +55,8 @@ def combine_excel_files(selected_model, is_thinking_model, dir, split_number):
         prefix, suffix = name_dict[group_key][0]
         output_path = os.path.join(tempt_path,f"{prefix}_{group_key}_{suffix}_revised_revised.xlsx")
         workbook.save(output_path)
+        workbook.close()
+        time.sleep(0.1)
 
     files = os.listdir(dir)
 
