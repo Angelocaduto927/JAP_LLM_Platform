@@ -209,9 +209,18 @@ def main(model_index_input = None):
             "qwen3-30b-a3b-thinking-2507":{"is_thinking": True}
         }
     
+    # 定义模型配置后，追加对 voting 组的支持
+    model_config.update({
+        "voting_group_1": {"is_thinking": False},
+        "voting_group_2": {"is_thinking": False},
+        "voting_group_3": {"is_thinking": False},
+        "voting_group_4": {"is_thinking": False},
+    })
+    
     if model_index_input is not None:
         selected_model = model_index_input
-        is_thinking_model = model_config[selected_model]["is_thinking"]
+        # 兼容 voting_group_*，避免 KeyError
+        is_thinking_model = model_config.get(selected_model, {"is_thinking": False})["is_thinking"]
     else:
         available_models = list(model_config.keys())
         

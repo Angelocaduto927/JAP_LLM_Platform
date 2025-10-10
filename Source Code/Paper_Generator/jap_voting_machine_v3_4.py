@@ -74,7 +74,7 @@ def create_llm(model_name: str, is_thinking: bool, temperature: float = 0.3) -> 
             max_tokens=2048,
             max_retries=3,
             streaming=True,
-            extra_body={"thinking_budget": 2000}
+            extra_body={"thinking_budget": 1000}
         )
     else:
         return ChatOpenAI(
@@ -119,11 +119,17 @@ def extract_question_numbers(text: str) -> List[str]:
     if text == "False" or not text.strip():
         return []
     
-    # 使用正则表达式匹配所有形式为"Qx: もんだいy"的题号
     pattern = r'Q\d+:\s*もんだい\d+'
     matches = re.findall(pattern, text)
     
-    return matches
+    cleaned = []
+    seen = set()
+    for m in matches:
+        normalized = re.sub(r'\s+', ' ', m).strip()
+        if normalized not in seen:
+            cleaned.append(normalized)
+            seen.add(normalized)
+    return cleaned
 
 def get_model_vote(text: str, llm: ChatOpenAI, error_type: str, is_thinking: bool = False) -> Tuple[bool, List[str]]:
     """获取单个模型对特定错误类型的投票，返回具体题号列表"""
@@ -213,14 +219,7 @@ def get_model_revision_for_question(question_text: str, llm: ChatOpenAI, error_t
 def get_voting_result(text: str, experiment_group: int) -> Dict[str, Dict]:
     """
     获取每个题目的投票结果
-    返回格式: {
-        "Q1: もんだい1": {
-            "error_types": ["multiple_correct_answers", "stem_errors"],
-            "total_weight": 75,  # 累计权重
-            "models": ["model1", "model2"]  # 识别出问题的模型
-        },
-        ...
-    }
+    每个模型对每个题目只计算一次权重，而不是按错误类型累加
     """
     config = get_experiment_config(experiment_group)
     models = config["models"]
@@ -250,30 +249,28 @@ def get_voting_result(text: str, experiment_group: int) -> Dict[str, Dict]:
             has_stem, questions_stem = get_model_vote(text, llm, "stem_errors", is_thinking)
             
             # 记录每个题目的投票情况
-            all_questions = set(questions_multiple + questions_stem)
+            all_questions = set(questions_multiple + questions_stem)  # 使用集合去重
             
             print(f"  - Found issues in {len(all_questions)} questions")
             if all_questions:
                 print(f"  - Flagged questions: {', '.join(all_questions)}")
             
-            # 更新每个题目的权重
-            for q in questions_multiple:
+            # 更新每个题目的权重 - 修改为每个模型只计算一次权重
+            for q in all_questions:
                 if q not in question_votes:
                     question_votes[q] = {"error_types": [], "total_weight": 0, "models": []}
-                question_votes[q]["total_weight"] += weight
-                if "multiple_correct_answers" not in question_votes[q]["error_types"]:
+                
+                # 添加模型权重（每题每模型只加一次）
+                if model_name not in question_votes[q]["models"]:
+                    question_votes[q]["total_weight"] += weight
+                    question_votes[q]["models"].append(model_name)
+                
+                # 只记录错误类型（不重复累加权重）
+                if q in questions_multiple and "multiple_correct_answers" not in question_votes[q]["error_types"]:
                     question_votes[q]["error_types"].append("multiple_correct_answers")
-                if model_name not in question_votes[q]["models"]:
-                    question_votes[q]["models"].append(model_name)
-            
-            for q in questions_stem:
-                if q not in question_votes:
-                    question_votes[q] = {"error_types": [], "total_weight": 0, "models": []}
-                question_votes[q]["total_weight"] += weight
-                if "stem_errors" not in question_votes[q]["error_types"]:
+                
+                if q in questions_stem and "stem_errors" not in question_votes[q]["error_types"]:
                     question_votes[q]["error_types"].append("stem_errors")
-                if model_name not in question_votes[q]["models"]:
-                    question_votes[q]["models"].append(model_name)
             
         except Exception as e:
             print(f"Error with model {model_name}: {e}")

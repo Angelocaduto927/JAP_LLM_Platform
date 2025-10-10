@@ -7,7 +7,6 @@ import re
 import os
 import time
 import string
-import json
 
 from docx import Document
 from langchain_core.prompts import ChatPromptTemplate
@@ -441,119 +440,105 @@ def excel_revise_simple(excel_path: str, output_dir: str, model: str, is_thinkin
 # ---------------------------
 def excel_revise_with_voting(excel_path: str, output_dir: str, experiment_group: int, max_iterations=5, temperature=0.6):
     """
-    使用voting machine进行Excel文件题目修订
-    
-    Args:
-        excel_path: 输入的Excel文件路径
-        output_dir: 输出目录
-        experiment_group: 实验组编号 (1-4)
-        max_iterations: 最大迭代次数
-        temperature: 模型温度参数
+    使用voting machine进行Excel文件题目修订（输出与3_3一致：revision_log.txt + iteration_xxx.xlsx + final *_revised.xlsx）
     """
     # 从Excel文件加载题目
     print(f"Loading questions from {excel_path}")
     revised_result = load_excel_as_text(excel_path)
-    
     if not revised_result:
         print("Failed to load questions from Excel file")
         return
-    
-    # 获取文件名和实验组配置
+
+    # 文件名与实验组配置
     filename = os.path.splitext(os.path.basename(excel_path))[0]
     config = get_experiment_config(experiment_group)
-    
-    print(f"Using {config['name']} for revision")
-    
-    # 选择权重最高的模型作为修订模型
-    revision_model_info = max(config["models"], key=lambda x: x["weight"])
-    revision_model_name = revision_model_info["model_name"]
-    is_thinking_model = revision_model_info["is_thinking"]
-    
-    # 初始化修订LLM
+
+    # 选择权重最高的修订模型，并创建 LLM
+    try:
+        revision_model_info = max(config["models"], key=lambda x: x.get("weight", 0))
+        revision_model_name = revision_model_info["model_name"]
+        is_thinking_model = revision_model_info.get("is_thinking", False)
+    except Exception:
+        # 兜底：若配置不含权重信息，取第一个模型
+        revision_model_info = config["models"][0]
+        revision_model_name = revision_model_info["model_name"]
+        is_thinking_model = revision_model_info.get("is_thinking", False)
+
     llm_revise = create_llm(revision_model_name, is_thinking_model, temperature)
-    
-    # 创建日志文件
-    log_path = os.path.join(output_dir, f"{filename}_voting_group_{experiment_group}_log.json")
-    
+
+    # 仅保留 3_3 风格文本日志
+    os.makedirs(output_dir, exist_ok=True)
+    log_txt_path = os.path.join(output_dir, f"{filename}_revision_log.txt")
+    with open(log_txt_path, 'w', encoding='utf-8') as f:
+        f.write(f"Voting Group: {experiment_group}\n")
+        f.write(f"Revision model: {revision_model_name} (thinking={is_thinking_model})\n")
+        f.write(f"Start: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+
     # 迭代修订
     for iteration in range(max_iterations):
         print(f"\n--- Iteration {iteration + 1} ---")
-        
-        # 使用voting machine进行错误检测，获取每道题目的投票情况
+
+        # 1) 投票检测
         question_votes = get_voting_result(revised_result, experiment_group)
-        
-        # 筛选出需要修改的题目（超过阈值的）
         questions_to_revise = {q: info for q, info in question_votes.items() if info.get("exceeds_threshold", False)}
-        
-        # 记录详细的投票信息
-        iteration_log = {
-            "iteration": iteration + 1,
-            "experiment_group": experiment_group,
-            "config_name": config["name"],
-            "threshold": config["threshold"],
-            "total_questions_voted": len(question_votes),
-            "questions_to_revise": len(questions_to_revise),
-            "question_votes": question_votes,
-            "revision_model": revision_model_name
-        }
-        
-        # 保存投票日志
-        with open(log_path, 'a', encoding='utf-8') as log_file:
-            log_file.write(json.dumps(iteration_log, ensure_ascii=False, indent=2) + "\n")
-        
+
+        # 写入文本日志
+        with open(log_txt_path, 'a', encoding='utf-8') as f:
+            f.write(f"\nIteration {iteration + 1}\n")
+            f.write(f"Threshold: {config.get('threshold')}\n")
+            f.write(f"Total voted: {len(question_votes)}\n")
+            f.write("To revise: " + (", ".join(sorted(questions_to_revise.keys())) if questions_to_revise else "none") + "\n")
+
         if not questions_to_revise:
             print(f"No questions need revision after {iteration + 1} iterations.")
             break
-        
-        print(f"Found {len(questions_to_revise)} questions needing revision:")
-        
-        # 对每个需要修改的题目进行处理
+
+        # 2) 按需修订
         revised_count = 0
         for question_id, vote_info in questions_to_revise.items():
-            print(f"  - Revising {question_id} (errors: {', '.join(vote_info['error_types'])})")
-            
-            # 提取当前题目文本
+            print(f"  - Revising {question_id} (errors: {', '.join(vote_info.get('error_types', []))})")
             original_question = extract_question_by_id(revised_result, question_id)
             if not original_question:
                 print(f"    Warning: Could not find question {question_id} in text!")
                 continue
-            
-            # 让权重最高的模型修改这道题
-            revised_question = ""
-            
-            for error_type in vote_info["error_types"]:
-                current_revision = get_model_revision_for_question(
-                    original_question, 
+
+            revised_question = original_question
+            for error_type in vote_info.get("error_types", []):
+                candidate = get_model_revision_for_question(
+                    original_question,
                     llm_revise,
-                    error_type, 
+                    error_type,
                     is_thinking_model
                 )
-                revised_question = current_revision if current_revision else original_question
-            
+                if candidate:
+                    revised_question = candidate
+
             if revised_question and revised_question != original_question:
-                # 将修改后的题目放回试卷中
                 revised_result = replace_question(revised_result, original_question, revised_question)
                 revised_count += 1
-                print(f"    Successfully revised")
+                print("    Successfully revised")
             else:
-                print(f"    No changes made")
-        
+                print("    No changes made")
+
         print(f"Revised {revised_count} questions in iteration {iteration + 1}")
-        
-        # 保存中间结果
-        intermediate_excel = f"{filename}_voting_group_{experiment_group}_iteration_{iteration + 1}.xlsx"
+
+        # 3) 保存中间产物（与 3_3 一致）
+        intermediate_excel = f"{filename}_iteration_{iteration + 1}.xlsx"
         save_text_to_excel(revised_result, output_dir, intermediate_excel)
-        
+
         if revised_count == 0:
             print("No questions were modified in this iteration. Stopping.")
             break
-            
     else:
         print(f"Maximum iterations ({max_iterations}) reached.")
-    
-    # 保存最终结果
-    final_excel = f"{filename}_voting_group_{experiment_group}_revised.xlsx"
+
+    # 最终产物命名与 3_3 对齐：filename_revised.xlsx（split 文件名已含 _revised => 产出 *_revised_revised.xlsx）
+    final_excel = f"{filename}_revised.xlsx"
     save_text_to_excel(revised_result, output_dir, final_excel)
+
+    with open(log_txt_path, 'a', encoding='utf-8') as f:
+        f.write(f"\nFinal saved: {final_excel}\nEnd: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+
     print(f"Final revised questions saved to {os.path.join(output_dir, final_excel)}")
 
 # ---------------------------
