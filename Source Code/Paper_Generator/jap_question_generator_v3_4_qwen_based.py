@@ -495,6 +495,11 @@ def excel_revise_with_voting(excel_path: str, output_dir: str, experiment_group:
 
         # 2) 按需修订
         revised_count = 0
+        error_name_map = {
+            "multiple_correct_answers": "Multiple correct answers",
+            "stem_errors": "Stem errors",
+        }
+
         for question_id, vote_info in questions_to_revise.items():
             print(f"  - Revising {question_id} (errors: {', '.join(vote_info.get('error_types', []))})")
             original_question = extract_question_by_id(revised_result, question_id)
@@ -502,19 +507,18 @@ def excel_revise_with_voting(excel_path: str, output_dir: str, experiment_group:
                 print(f"    Warning: Could not find question {question_id} in text!")
                 continue
 
-            revised_question = original_question
-            for error_type in vote_info.get("error_types", []):
-                candidate = get_model_revision_for_question(
-                    original_question,
-                    llm_revise,
-                    error_type,
-                    is_thinking_model
-                )
-                if candidate:
-                    revised_question = candidate
+            human_errors = [error_name_map.get(e, e) for e in vote_info.get("error_types", [])]
+            errors_desc = ", ".join(human_errors) if human_errors else "General issues"
 
-            if revised_question and revised_question != original_question:
-                revised_result = replace_question(revised_result, original_question, revised_question)
+            candidate = get_model_revision_for_question(
+                original_question,
+                llm_revise,
+                errors_desc,
+                is_thinking_model
+            )
+
+            if candidate and candidate != original_question:
+                revised_result = replace_question(revised_result, original_question, candidate)
                 revised_count += 1
                 print("    Successfully revised")
             else:

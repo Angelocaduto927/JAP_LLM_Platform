@@ -88,25 +88,22 @@ def create_llm(model_name: str, is_thinking: bool, temperature: float = 0.3) -> 
         )
 
 def api_call_for_voting(chain, input_data, is_streaming=False, max_retries=3, delay=1):
-    """处理投票时的API调用，支持流式传输"""
+    """处理投票时/修订时的API调用，支持传 dict 变量（含 errors）"""
     retries = 0
     while retries < max_retries:
         try:
+            variables = input_data if isinstance(input_data, dict) else {"input_data": input_data}
             if is_streaming:
-                # 对于流式调用，需要收集所有块
                 response_chunks = []
-                for chunk in chain.stream({"input_data": input_data}):
+                for chunk in chain.stream(variables):
                     if hasattr(chunk, 'content'):
                         response_chunks.append(chunk.content)
-                
-                # 创建一个类似于非流式响应的对象
                 class StreamResponse:
                     def __init__(self, content):
                         self.content = content
-                
                 return StreamResponse(''.join(response_chunks))
             else:
-                return chain.invoke({"input_data": input_data})
+                return chain.invoke(variables)
         except Exception as e:
             print(f"API call failed: {e}. Retrying in {delay} seconds...")
             retries += 1
@@ -180,37 +177,44 @@ def get_model_vote(text: str, llm: ChatOpenAI, error_type: str, is_thinking: boo
         print(f"Error getting vote from model: {e}")
         return False, []
 
-def get_model_revision_for_question(question_text: str, llm: ChatOpenAI, error_type: str, is_thinking: bool = False) -> str:
-    """获取模型对特定题目的修改建议"""
-    
+def get_model_revision_for_question(question_text: str, llm: ChatOpenAI, errors_desc: str, is_thinking: bool = False) -> str:
+    """获取模型对特定题目的修改建议（支持在 prompt 中引用 {errors}）"""
     prompt = ChatPromptTemplate.from_messages([
-        ("human", f'''
-        You are an experienced Japanese N4/N5 examiner. There is a Japanese multiple-choice question at the end of this message that has issues with {error_type}. 
-        Your task is to modify this question to fix the issues:
+        ("system", "You are an experienced Japanese N4/N5 examiner."),
+        ("human", '''
+        There are some Japanese multiple-choice questions at the end of this message. All of the questions have some issues. You can refer to {errors}. 
+        Your task is to modify those multiple-choice test questions to meet the following criteria and fix all the issues:
 
-        1. No duplicate options: All four options within the question should be unique.  
-        2. No multiple reasonable answers: Ensure that only one answer is correct and reasonable.
-        3. Grammatical correctness: The title and stem must be grammatically correct.
-        4. Clear instructions: Make sure the question is clear and unambiguous.
+        1. No duplicate questions: Ensure that all questions are unique.
+        2. No duplicate options: All four options within a question should be unique.  
+        3. No multiple reasonable answers: Ensure that only one answer is correct and reasonable.
+        4. Grammatical correctness: The title and stem of each question must be grammatically correct.
+        5. Relevance of options: Ensure that the stem clearly indicates what cannot be chosen.
+        6. Pronunciation and Word Usage: Ensure proper Japanese formatting.
+        7. General guidance: Eliminate any ambiguity and ensure appropriate difficulty level.
 
-        Output Format: The question must **keep the original format**:
-        - The question must start with the same `Qx: もんだいy\n` as the original
-        - The question must have exactly 4 options (`1` to `4`).
-        - The question must have an `Answer: x` at the end.
+        8. Output Format: Each question must **keep the original format**:
+        - Each question must start with `Qx: もんだいy\n`
+        - Each question must have exactly 4 options (`1` to `4`).
+        - Each question must have an `Answer: x` at the end.
+        - Each question must contain empty parentheses ( ) for the blank.
         - Do not include any other comments.
         
-        Here is the question to revise:
-        {question_text}
+        9. make sure the number of questions remains exactly the same as the input and the question index (the Qx: もんだいy part) for each question is unchanged.
+        
+        Here are the questions to review and modify:
+        {input_data}
         ''')
     ])
-    
     try:
         chain = prompt | llm
-        result = api_call_for_voting(chain, question_text, is_streaming=is_thinking)
-        
+        result = api_call_for_voting(
+            chain,
+            {"input_data": question_text, "errors": errors_desc},
+            is_streaming=is_thinking
+        )
         if result is None:
-            return question_text  # 如果失败，返回原始问题
-        
+            return question_text
         return result.content.strip()
     except Exception as e:
         print(f"Error getting revision: {e}")
