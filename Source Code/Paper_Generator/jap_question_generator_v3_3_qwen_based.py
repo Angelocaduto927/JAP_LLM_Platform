@@ -463,7 +463,7 @@ def main():
         #"qwen3-vl-235b-a22b-instruct": {"is_thinking": False},
         "qwen-flash": {"is_thinking": True},
         "qwen3-30b-a3b-instruct-2507": {"is_thinking": False},
-        "qwen-mt-plus": {"is_thinking": False},
+        #"qwen-mt-plus": {"is_thinking": False},
         "qwen3-30b-a3b": {"is_thinking": True},
         #"qwen3-32b": {"is_thinking": True},
         "qwen3-vl-235b-a22b-thinking": {"is_thinking": True},
