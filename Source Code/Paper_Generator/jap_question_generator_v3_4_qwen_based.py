@@ -514,7 +514,9 @@ def excel_revise_with_voting(excel_path: str, output_dir: str, experiment_group:
                 original_question,
                 llm_revise,
                 errors_desc,
-                is_thinking_model
+                is_thinking_model,
+                force_modify=True,           # 强制修改
+                max_attempts=3 
             )
 
             if candidate and candidate != original_question:

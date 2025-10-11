@@ -182,11 +182,15 @@ def get_model_vote(text: str, llm: ChatOpenAI, error_type: str, is_thinking: boo
         print(f"Error getting vote from model: {e}")
         return False, []
 
-def get_model_revision_for_question(question_text: str, llm: ChatOpenAI, errors_desc: str, is_thinking: bool = False) -> str:
-    """获取模型对特定题目的修改建议（支持在 prompt 中引用 {errors}）"""
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", "You are an experienced Japanese N4/N5 examiner."),
-        ("human", '''
+def get_model_revision_for_question(question_text: str, llm: ChatOpenAI, errors_desc: str, is_thinking: bool = False, force_modify: bool = False, max_attempts: int = 2) -> str:
+    """获取模型对特定题目的修改建议（支持在 prompt 中引用 {errors}）
+    当 force_modify=True 时，强制与输入不同（至多重试 max_attempts 次）
+    """
+    def _normalize(s: str) -> str:
+        return re.sub(r'\s+', ' ', s).strip()
+
+    # 构造基础与强制修改提示
+    base_instructions = '''
         There are some Japanese multiple-choice questions at the end of this message. All of the questions have some issues. You can refer to {errors}. 
         Your task is to modify those multiple-choice test questions to meet the following criteria and fix all the issues:
 
@@ -198,32 +202,67 @@ def get_model_revision_for_question(question_text: str, llm: ChatOpenAI, errors_
         6. Pronunciation and Word Usage: Ensure proper Japanese formatting.
         7. General guidance: Eliminate any ambiguity and ensure appropriate difficulty level.
 
-        8. Output Format: Each question must **keep the original format**:
-        - Each question must start with `Qx: もんだいy\n`
-        - Each question must have exactly 4 options (`1` to `4`).
+        8. Output Format: Each question must keep the original format:
+        - Each question must start with `Qx: もんだいy`
+        - Each question must have exactly 4 options (1 to 4).
         - Each question must have an `Answer: x` at the end.
         - Each question must contain empty parentheses ( ) for the blank.
         - Do not include any other comments.
 
-        9. **make sure the index of questions remains exactly the same as the input (the r'Q\d+: もんだい\d+' part), no other characters, no other signs, no other things!**
+        9. Make sure the index of questions remains exactly the same as the input (the r'Q\\d+: もんだい\\d+' part), no other characters, no other signs, no other things!
+    '''
+    force_clause = """
+        IMPORTANT: You MUST modify the question so that the output is NOT identical to the input.
+        If you believe the question is already fine, still perform a small but meaningful refinement:
+        - Slightly rephrase the stem for clarity, OR
+        - Improve at least one distractor, OR
+        - Adjust punctuation/wording without changing the meaning,
+        while keeping the same question index and valid single correct answer.
+    """ if force_modify else ""
 
-        Here are the questions to review and modify:
-        {input_data}
-        ''')
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", "You are an experienced Japanese N4/N5 examiner."),
+        ("human", base_instructions + force_clause + "\n\nHere are the questions to review and modify:\n{input_data}\n")
     ])
-    try:
-        chain = prompt | llm
-        result = api_call_for_voting(
-            chain,
-            {"input_data": question_text, "errors": errors_desc},
-            is_streaming=is_thinking
-        )
-        if result is None:
-            return question_text
-        return result.content.strip()
-    except Exception as e:
-        print(f"Error getting revision: {e}")
-        return question_text
+
+    original_norm = _normalize(question_text)
+
+    attempt = 0
+    last_candidate = question_text
+    while attempt < max_attempts:
+        attempt += 1
+        try:
+            chain = prompt | llm
+            result = api_call_for_voting(
+                chain,
+                {"input_data": question_text, "errors": errors_desc},
+                is_streaming=is_thinking
+            )
+            if result is None or not getattr(result, "content", "").strip():
+                # 无输出则继续重试
+                continue
+
+            candidate = result.content.strip()
+
+            # 若模型不小心改了题号，尽量修正为原题号
+            orig_id_match = re.match(r'(Q\d+:\s*もんだい\d+)', question_text)
+            cand_id_match = re.match(r'(Q\d+:\s*もんだい\d+)', candidate)
+            if orig_id_match:
+                orig_id = orig_id_match.group(1)
+                if not cand_id_match or cand_id_match.group(1) != orig_id:
+                    candidate = re.sub(r'^Q\d+:\s*もんだい\d+', orig_id, candidate)
+
+            # 强制不同：若与原文等同（忽略空白差异），重试
+            if force_modify and _normalize(candidate) == original_norm:
+                last_candidate = candidate
+                continue
+
+            return candidate
+        except Exception as e:
+            print(f"Error getting revision (attempt {attempt}): {e}")
+
+    # 达到重试上限仍未改变，返回最后一次候选（或原文）
+    return last_candidate
 
 def get_voting_result(text: str, experiment_group: int) -> Dict[str, Dict]:
     """
