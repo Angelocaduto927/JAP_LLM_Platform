@@ -17,7 +17,7 @@ def get_experiment_config(experiment_group: int) -> Dict:
     configs = {
         1: {  # 对照组
             "name": "Control Group",
-            "threshold": 0.65,
+            "threshold": 0.51,
             "models": [
                 {"model_name": "qwen3-vl-235b-a22b-thinking", "weight": 29, "is_thinking": True},
                 {"model_name": "qwen3-235b-a22b-thinking-2507", "weight": 20, "is_thinking": True},
