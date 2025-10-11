@@ -74,7 +74,7 @@ def create_llm(model_name: str, is_thinking: bool, temperature: float = 0.3) -> 
             max_tokens=2048,
             max_retries=3,
             streaming=True,
-            extra_body={"thinking_budget": 1000}
+            extra_body={"thinking_budget": 1024}
         )
     else:
         return ChatOpenAI(
@@ -137,10 +137,12 @@ def get_model_vote(text: str, llm: ChatOpenAI, error_type: str, is_thinking: boo
             ("human", 
             """{input_data}\n\n
             Check if any question has **more than one correct answer**. This means that multiple options are valid for the question given its context.\n
-            If at least one question has multiple valid correct answers, respond with the question numbers that potentially have the problem only, the form requirement is number + question type (eg. 'Q8: もんだい1, Q7: もんだい2' **questions separated by commas**).\n
+            If at least one question has multiple valid correct answers, respond with the question numbers that potentially have the problem only,
+            the form requirement is r'Q\d+: もんだい\d+' (eg. 'Q8: もんだい1, Q7: もんだい2' **questions separated by commas**). No other characters!\n
+            
             If not, you must return "False" only.\n
             
-            Make sure the number of questions remains exactly the same as the input and the question index (the Qx: もんだいy part) for each question is unchanged.
+            Make sure the r'Q\d+: もんだい\d+' part remains exactly the same as the input and the question index (r'Q\d+: もんだい\d+' part) for each question is unchanged.
             """
             ),
         ])
@@ -152,9 +154,12 @@ def get_model_vote(text: str, llm: ChatOpenAI, error_type: str, is_thinking: boo
             "- Grammatical mistakes\n"
             "- Unnatural sentence structures\n"
             "- Ambiguous wording\n"
-            "If there is at least one issue in the stems, you must respond with the question numbers that potentially have the problem only, the form requirement is number + question type (eg. 'Q8: もんだい1, Q7: もんだい2').\n"
+            "If there is at least one issue in the stems, you must respond with the question numbers that potentially have the problem only,"
+            "the form requirement is r'Q\d+: もんだい\d+' (eg. 'Q8: もんだい1, Q7: もんだい2' **questions separated by commas**). No other characters!\n"
+            
             "Otherwise, respond with 'False' only.\n"
-            "Make sure the number of questions remains exactly the same as the input and the question index (the Qx: もんだいy part) for each question is unchanged."
+            
+            "Make sure the r'Q\d+: もんだい\d+' part remains exactly the same as the input and the question index (r'Q\d+: もんだい\d+' part) for each question is unchanged."
             )
         ])
     
@@ -199,9 +204,9 @@ def get_model_revision_for_question(question_text: str, llm: ChatOpenAI, errors_
         - Each question must have an `Answer: x` at the end.
         - Each question must contain empty parentheses ( ) for the blank.
         - Do not include any other comments.
-        
-        9. make sure the number of questions remains exactly the same as the input and the question index (the Qx: もんだいy part) for each question is unchanged.
-        
+
+        9. **make sure the index of questions remains exactly the same as the input (the r'Q\d+: もんだい\d+' part), no other characters, no other signs, no other things!**
+
         Here are the questions to review and modify:
         {input_data}
         ''')
@@ -244,7 +249,7 @@ def get_voting_result(text: str, experiment_group: int) -> Dict[str, Dict]:
         print(f"Getting vote from {model_name} (weight: {weight})...")
         
         try:
-            llm = create_llm(model_name, is_thinking)
+            llm = create_llm(model_name, is_thinking, 0.3)
             
             # 检查多个正确答案
             has_multiple, questions_multiple = get_model_vote(text, llm, "multiple_correct_answers", is_thinking)
