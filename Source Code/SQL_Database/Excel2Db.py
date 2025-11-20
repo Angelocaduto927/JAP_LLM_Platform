@@ -6,10 +6,11 @@ import re
 import shutil
 
 db = mysql.connector.connect(
-    host="localhost",
+    host="10.20.7.5",
     user="root",
-    password="123",
-    database="japgpt"
+    password="123456", 
+    port=3306,
+    database="JAPGPT"  
 )
 cursor = db.cursor()
 
@@ -43,6 +44,7 @@ def get_last_index(knowledge_point):   #knowledge_point = "N4_grammar_1" // "N4_
 
 folder_path = "docs/Generated_paper/revised_grammar_questions"
 processed_folder_path = "docs/Generated_paper/stored_grammar_questions"
+
 
 for file_name in os.listdir(folder_path):
     if file_name.endswith(('.xlsx',)):
@@ -108,9 +110,9 @@ for file_name in os.listdir(folder_path):
                 params = (question_index, type, level, content, is_gpt, correct_answer)
                 cursor.execute(query, params)
                 db.commit()
-            
 
-    dst_path = os.path.join(processed_folder_path, file_name)
-    shutil.move(file_path, dst_path)
+        # Move only processed .xlsx files
+        dst_path = os.path.join(processed_folder_path, file_name)
+        shutil.move(file_path, dst_path)
 
 db.close()

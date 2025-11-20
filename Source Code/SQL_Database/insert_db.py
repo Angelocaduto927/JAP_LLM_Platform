@@ -1,16 +1,18 @@
-from Paper_Generator.jap_paper_revise import return_revised_result
-from Paper_Generator.jap_paper_revise import return_paper
-from Paper_Generator.jap_paper_revise import extract_student_id
-from Paper_Generator.jap_paper_revise import read_name_from_docx
-from Paper_Generator.jap_paper_revise import read_answers_from_docx
 import mysql.connector
 import os
+import sys
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, project_root)
 import glob
 from docx import Document
 # from db_util import drop_table_query ,create_table_query ,insert_query,show_fiverows_query,select_mistake_query,db
 from db_question_students_results import insert_questions_query, insert_students_query, insert_exam_results_query,select_mistake_query,select_all_query,db
 from join_search import join_search
-
+from Paper_Generator.jap_paper_revise import return_revised_result
+from Paper_Generator.jap_paper_revise import return_paper
+from Paper_Generator.jap_paper_revise import extract_student_id
+from Paper_Generator.jap_paper_revise import read_name_from_docx
+from Paper_Generator.jap_paper_revise import read_answers_from_docx
 
 
 def insert_or_update_student(student_no, student_name, student_email):
