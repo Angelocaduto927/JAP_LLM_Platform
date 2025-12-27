@@ -1,4 +1,7 @@
-'''Question_Generator'''
+'''Question_Generator'''  
+
+#目前使用该工作流出题，出题后再用v3.x版本进行修订与检查
+
 import re
 import os
 import time
@@ -11,6 +14,7 @@ from langchain_openai import ChatOpenAI
 from jap_excel_processor import parse_questions
 from jap_excel_processor import store_questions_to_excel
 from jap_excel_processor import process_word_to_excel
+import config
 
 def split_into_sentences(text):
     sentence_endings = re.compile(r'(?<=[。！？])\s*')
@@ -36,7 +40,7 @@ def extract_numbered_content(file_path, start_number, end_number):
     doc = Document(file_path)
     
     # Compile a regex pattern to match the numbered entries with or without additional details like kanji readings in brackets
-    pattern = re.compile(rf"^\s*(\d+)\.\s*([^【]*)(?:【([^】]*)】)?\s*(.*)")
+    pattern = re.compile(rf"{config.test_grammar_format}")
     
     # Lists to store the extracted content
     num = []
@@ -54,7 +58,7 @@ def extract_numbered_content(file_path, start_number, end_number):
             number = int(match.group(1))
             item = match.group(2).strip()
             kanji_reading = match.group(3) if match.group(3) else ""
-            additional_text = match.group(4).strip()
+            additional_text = match.group(4).strip() if match.group(4) else ""
 
             # Prepare the full item content (item + kanji reading if exists)
             full_item = item + ("【" + kanji_reading + "】" if kanji_reading else "")
@@ -68,10 +72,10 @@ def extract_numbered_content(file_path, start_number, end_number):
                 # If the number is already in the list, add to the content list
                 if number not in num:
                     num.append(number)
-                    content_list.append([f"{sanitized_full_item} {additional_text}"])
+                    content_list.append([f"{sanitized_full_item}{additional_text}"])
                 else:
                     index = num.index(number)
-                    content_list[index].append(f"{sanitized_full_item} {additional_text}")
+                    content_list[index].append(f"{sanitized_full_item}{additional_text}")
 
     return num, content_list
 
@@ -83,63 +87,23 @@ def extract_numbered_content(file_path, start_number, end_number):
 # ---------------------------
 def generate_prompt(knowledge_point: str, question_format: int, num_questions: int) -> str:
     """生成题目生成的prompt文本"""
-    if question_format not in (1, 2):
+    if question_format not in range(1, config.num_types + 1):
         raise ValueError("question_format must be 1 or 2")
     if not isinstance(num_questions, int) or num_questions <= 0:
         raise ValueError("num_questions must be a positive integer")
     
-    interference_rules = {
-        1: "The grammar point is what should be filled into the blank space (i.e., the blank must be completed with this grammar point or its correct conjugation).",
-        2: "The grammar point already appears in the question stem, and you must use it to either complete another blank or choose the most natural continuation (i.e., testing understanding and application of the grammar point)."
-    }
-
-    
-    difficulty_levels = {
-        1: "Basic difficulty: simple sentence structure, clear context, and direct application of grammar points.",
-        2: "Intermediate difficulty: slightly complex sentence structure, may contain multiple grammatical elements, and requires certain analytical skills.",
-        3: "Advanced difficulty: complex sentence structure, the context has certain implicit information, and requires a deep understanding of grammar points and context."
-    }
-    
-    validation_prompt = """
-        Generated questions must undergo the following quality validations:
-        1. Grammatical accuracy: The grammar of the stems and options must be correct, natural and meet the standards of Japanese N4/N5 level.
-        2. Distractor validity: Distractors should be plausible enough to confuse learners, but must be grammatically incorrect according to standard Japanese grammar rules (excluding cultural nuances or non-standard colloquial usages). Distractors may be designed to look very similar to the correct form, but they must represent non-existent or ungrammatical constructions in standard Japanese. In other words, distractors should be misleading at first glance, yet clearly incorrect under standard grammar rules.
-        3. Reasonable difficulty: Design questions according to different difficulty levels to ensure a reasonable distribution of difficulty.
-        4. Context authenticity: Sentence scenarios must meet the following requirements:
-            - Context authenticity: Sentence scenarios must be sufficiently complete and detailed so that learners can perform thorough logical analysis. Only with enough contextual information can distractors be eliminated reliably based on standard grammatical rules, rather than guesswork
-            - Daily conversations (such as chatting with friends, shopping)
-            - Common exam scenarios (such as email writing, schedule planning)
-            - Avoid artificial contexts (such as science fiction or professional fields)
-"""
-    
-    base_count = max(1, int(num_questions * 0.4))
-    intermediate_count = max(1, int(num_questions * 0.4))
-    advanced_count = num_questions - base_count - intermediate_count
-    if advanced_count < 0:
-        base_count -= 1
-        intermediate_count -= 1
-        advanced_count = num_questions - base_count - intermediate_count
-    
-    prompt = (
-        f"You are an experienced Japanese examiner for JLPT N4/N5. Create exactly {num_questions} questions "
-        f"for the grammar point: **{knowledge_point}**.\n\n"
-        f"Question Format {question_format}: {interference_rules.get(question_format, '')}\n\n"
-        f"Generate questions with the following difficulty breakdown: "
-        f"Basic ({base_count} questions), Intermediate ({intermediate_count} questions), Advanced ({advanced_count} questions):\n\n"
-        f"{difficulty_levels[1]}\n{difficulty_levels[2]}\n{difficulty_levels[3]}\n\n"
-        f"{validation_prompt}\n\n"
-        f"Instructions:\n"
-        f"1. Each question must start with a header: 'Qx: もんだい{question_format}'.\n"
-        f"2. Provide exactly 4 options (1-4) in one line.\n"
-        f"3. End each question with 'Answer: x'.\n"
-        f"4. The question stem must always contain a pair of parentheses ( ) to indicate the blank where the option should be filled in and it must be empty in that parentheses (don't fill in the answer).\n"
-        f"5. No extra text or formatting!\n\n"
-        f"Example Format:\n"
-        f"Q1: もんだい{question_format}\n"
-        f"[Japanese Question Stem]\n"
-        f"1. Option1 2. Option2 3. Option3 4. Option4\n"
-        f"Answer: x\n"
+    prompt = config.prompt_config.format(
+        num_questions_each_type=num_questions,
+        knowledge_point=knowledge_point,
+        i=question_format,
+        base_count=config.base_count,
+        intermediate_count=config.intermediate_count,
+        advanced_count=config.advanced_count,
+        interference_rules=config.interference_rules[question_format],
+        difficulty_levels=config.difficulty_levels,
+        validation_prompt=config.validation_prompt
     )
+    
     return prompt
 
 def generate_grammar_questions(knowledge_point: str, question_format: int, num_questions: int) -> str:
@@ -411,15 +375,16 @@ def generate_check_store_pipeline(grammar_list, num_list, output_dir, revised_ne
     4. 存储最终修订结果（docx、excel）
     """
     filename = os.path.splitext(os.path.basename(base_filepath))[0]
+    num_questions_each_type =config.num_questions_each_type
     
     # 遍历每个知识点
     for knowledge_point, question_number in zip(grammar_list, num_list):
         print(f"Processing knowledge point: {knowledge_point}")
         all_questions = ""
         # 生成每种题型的题目并合并
-        for question_format in range(1, 3):
+        for question_format in range(1, config.num_types + 1):
             print(f"Generating questions for format {question_format}...")
-            questions_text = generate_grammar_questions(knowledge_point, question_format, 20)
+            questions_text = generate_grammar_questions(knowledge_point, question_format, num_questions_each_type)
             all_questions += f"\n### Format {question_format}\n" + questions_text
         
         # 保存初步生成的题目到一个临时文件（可选）
@@ -440,12 +405,14 @@ def generate_check_store_pipeline(grammar_list, num_list, output_dir, revised_ne
 
 
 def main():
-    test_grammar_original = "docs/test_grammar.docx"
-    revised_output_grammar = "docs/Generated_paper/revised_grammar_questions"
-    grammar_output = "docs/Generated_paper/original_grammar_questions"
+    test_grammar_original = config.test_grammar_path
+    revised_output_grammar = config.revised_output_path
+    grammar_output = config.grammar_output_path
+    start_number = config.start_number
+    end_number = config.end_number
 
-    grammar_num = extract_numbered_content(test_grammar_original, 1, 4)[0]
-    grammar_test = extract_numbered_content(test_grammar_original, 1, 4)[1]
+    grammar_num = extract_numbered_content(test_grammar_original, start_number, end_number)[0]
+    grammar_test = extract_numbered_content(test_grammar_original, start_number, end_number)[1]
 
     print(grammar_test)
 
