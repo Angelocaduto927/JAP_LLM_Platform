@@ -337,7 +337,7 @@ def excel_revise_simple(excel_path: str, output_dir: str, model: str, is_thinkin
 
         1. No duplicate questions: Ensure that all questions are unique.
         2. No duplicate options: All four options within a question should be unique.  
-        3. No multiple reasonable answers: Ensure that only one answer is correct and reasonable.
+        3. No multiple reasonable answers: Ensure that only one answer meets the question's requirement.
         4. Grammatical correctness: The title and stem of each question must be grammatically correct.
         5. Relevance of options: Ensure that the stem clearly indicates what cannot be chosen.
         6. Pronunciation and Word Usage: Ensure proper Japanese formatting.
@@ -655,7 +655,8 @@ def main():
         print(f"Model type: {'Thinking mode' if is_thinking_model else 'Standard mode'}")
         
         # 设置路径
-        input_dir = "docs/Generated_paper/question_num_significance_test/paper"
+        #input_dir = "docs/Generated_paper/question_num_significance_test/paper"
+        input_dir = "docs/Generated_paper/revised_grammar_questions"
         output_dir = f"docs/revised_shatin/{selected_model}"
         
         if not os.path.exists(output_dir):

@@ -10,6 +10,7 @@
 *.iws
 *.sln
 *.swp
+*.vs
 
 # Generated files.
 __pycache__/

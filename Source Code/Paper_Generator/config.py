@@ -24,52 +24,82 @@ interference_rules = {
             Answer: 1
             """,
         2: """
-            The question content should be exactly "就以下四個選項，那個是表示問題裏的複合動詞的正確用法？請選擇一個最適當的答案。" with the given compound verb knowledge point provided in square parentheses in next row.
-            Options 1-3 should be a complete sentence using the given compound verb knowledge point. Option 4 must be “All of the above are correct". Among options 1-3, there is only one correct option.
-            Example:
-            就以下四個選項，那個是表示問題裏的複合動詞的正確用法？請選擇一個最適當的答案。
-            【繰り返す (くりかえす)】
-            1. 失敗を繰り返してはならないんだ！
-            2. 準備が予定より遅れているため１回目の会議を繰り返す。
-            3. 最近、新商品の発売日を繰り返す会社が多いようだ。
-            4. All of the above are correct
+            Please generate a multiple-choice question about the correct usage of a given Japanese compound verb, following these strict rules: \n
+            1. The question stem must be written entirely in Traditional Chinese characters. \n
+            2. Do NOT use any Japanese words, particles, or grammar—especially DO NOT use “の”. Instead of “問題裏の複合動詞の正確用法”, write “問題裏的複合動詞的正確用法”. Always use the Chinese possessive particle “的”, never the Japanese “の”. \n
+            3. The question stem must be exactly: “就以下四個選項，那個是表示問題裏的複合動詞的正確用法？請選擇一個最適當的答案。” \n
+            4. On the next line, provide the target compound verb in square brackets, e.g., 【繰り返す (くりかえす)】. \n
+            5. Options 1–3 must be complete sentences using that compound verb. \n
+            6. Option 4 must be "All of the above are correct." \n
+            7. Among option 1-3, exactly one option must contain a correct usage (grammatically and contextually inappropriate). The other two must be incorrect and unnatural. Thus the answer must not be option 4.\n
+            8. The incorrect options should clearly violate standard usage patterns of the verb.\n
+            Critical: If you use “の” anywhere in the question stem, it is a very serious error and the question is invalid. Use only Traditional Chinese, including “的” for possession. \n
+            Example:\n
+            就以下四個選項，那個是表示問題裏的複合動詞的正確用法？請選擇一個最適當的答案。\n
+            【繰り返す (くりかえす)】\n
+            1. 失敗を繰り返してはならないんだ！\n
+            2. 準備が予定より遅れているため１回目の会議を繰り返す。\n
+            3. 最近、新商品の発売日を繰り返す会社が多いようだ。\n
+            4. All of the above are correct\n
             Answer: 1
             """,
         3: """
-            The question content should be exactly "就以下四個選項，那個是表示問題裏的複合動詞的正確用法？請選擇一個最適當的答案。" with the given compound verb knowledge point provided in square parentheses in next row.
-            Options 1-3 should be a complete sentence using the given compound verb knowledge point. Option 4 must be “All of the above are correct". Options 1-3 must be designed to be all correct, thus the answer should be option 4.
-            Example:
-            就以下四個選項，那個是表示問題裏的複合動詞的正確用法？請選擇一個最適當的答案。
-            【立ち上がる (たちあがる)】
-            1. 彼らは敗戦から立ち上がった。
-            2. 彼女たちは市民運動に立ち上がった。
-            3. 新しいプロジェクトが立ち上がった。
-            4. All of the above are correct
+            Please generate a multiple-choice question about the correct usage of a given Japanese compound verb, following these strict rules: \n
+            1. The question stem must be written entirely in Traditional Chinese characters. \n
+            2. Do NOT use any Japanese words, particles, or grammar—especially DO NOT use “の”. Instead of “問題裏の複合動詞の正確用法”, write “問題裏的複合動詞的正確用法”. Always use the Chinese possessive particle “的”, never the Japanese “の”. \n
+            3. The question stem must be exactly: “就以下四個選項，那個是表示問題裏的複合動詞的正確用法？請選擇一個最適當的答案。” \n
+            4. On the next line, provide the target compound verb in square brackets, e.g., 【立ち上がる (たちあがる)】. \n
+            5. Options 1–3 must be complete sentences using that compound verb. \n
+            6. Option 4 must be "All of the above are correct." \n
+            7. Options 1-3 must be designed as correct usages (grammatically and contextually inappropriate). Such that the answer must be option 4. \n
+            Critical: If you use “の” anywhere in the question stem, it is a very serious error and the question is invalid. Use only Traditional Chinese, including “的” for possession. \n
+            Example:\n
+            就以下四個選項，那個是表示問題裏的複合動詞的正確用法？請選擇一個最適當的答案。\n
+            【立ち上がる (たちあがる)】\n
+            1. 彼らは敗戦から立ち上がった。\n
+            2. 彼女たちは市民運動に立ち上がった。\n
+            3. 新しいプロジェクトが立ち上がった。\n
+            4. All of the above are correct\n
             Answer: 4
             """,
         4: """
-            The question content should be exactly "就以下四個選項，那個是表示問題裏的複合動詞的正確用法？請選擇一個最適當的答案。" with the given compound verb knowledge point provided in square parentheses in next row.
-            Options 1-4 should be a complete sentence using the given compound verb knowledge point. The answer is the option that using the compound verb correctly. Only one correct option. ** All other three options must use the compound verb incorrectly in grammar or scenario.**
-            Example:
-            就以下四個選項，那個是表示問題裏的複合動詞的正確用法？請選擇一個最適當的答案。
-            【受け取る (うけとる)】
-            1. あの会社は社長に向けられた批判を謙虚に受け取らず、結局社員全員に辞められてしまった。
-            2. 専門家からの意見を全面的に受け取り、新商品の性能を改善する。
-            3. 先日送っていただいた報告書を受け取りました。内容を確認し、次のミーティングで議論させていただきます。
-            4. 彼はその技を師匠から受け取った。
+            Please generate a multiple-choice question about the correct usage of a given Japanese compound verb, following these strict rules: \n
+            1. The question stem must be written entirely in Traditional Chinese characters. \n
+            2. Do NOT use any Japanese words, particles, or grammar—especially DO NOT use “の”. 
+                - “問題裏の複合動詞の正確用法” WRONG!
+                - “問題裏的複合動詞的正確用法” CORRECT!. \n
+            3. The question stem must match this expression: ^就以下四個選項，那個是表示問題裏的複合動詞的正確用法？請選擇一個最適當的答案。$ \n
+            4. On the next line, provide the target compound verb in square brackets, e.g., 【受け取る (うけとる)】. \n
+            5. Options 1–4 must be complete sentences using that compound verb. \n
+            6. Exactly one option must contain a correct usage (grammatically and contextually inappropriate). The other three must be incorrect and unnatural. \n
+            7. The incorrect options should clearly violate standard usage patterns of the verb. \n
+            Critical: If you use “の” anywhere in the question stem, it is a serious error. Use only Traditional Chinese, including “的” for possession. \n
+            Example:\n
+            就以下四個選項，那個是表示問題裏的複合動詞的正確用法？請選擇一個最適當的答案。\n
+            【受け取る (うけとる)】\n
+            1. あの会社は社長に向けられた批判を謙虚に受け取らず、結局社員全員に辞められてしまった。\n
+            2. 専門家からの意見を全面的に受け取り、新商品の性能を改善する。\n
+            3. 先日送っていただいた報告書を受け取りました。内容を確認し、次のミーティングで議論させていただきます。\n
+            4. 彼はその技を師匠から受け取った。\n
             Answer: 3
             """,
         5: """
-            The question content should be exactly "就以下四個選項，那個是表示問題裏的複合動詞的錯誤用法？請選擇一個最適當的答案。" with the given compound verb knowledge point provided in square parentheses in next row.
-            Options 1-4 should be a complete sentence using the given compound verb knowledge point. The answer is the option that using the compound verb wrongly. 
-            Attention! Only one option uses the compound verb incorrectly and it is the target answer to choose. Other three options must use the compound verb correctly in grammar and scenario.
-            Example:
-            就以下四個選項，那個是表示問題裏的複合動詞的錯誤用法？請選擇一個最適當的答案。
-            【引き取る (ひきとる)】
-            1. 店員：「お客様のご要望にはお応えできません。どうぞお引き取り下さい。」
-            2. わたしの苦手な仕事を同僚の田中さんが引き取ってくれました。
-            3. 不妊が発覚したのを機に、孤児院から孤児を引き取って育てる事を決めました。
-            4. 昨日は先輩から電子メールで重要なメッセージを引き取った。
+            Please generate a multiple-choice question about the correct usage of a given Japanese compound verb, following these strict rules: \n
+            1. The question stem must be written entirely in Traditional Chinese characters. \n
+            2. Do NOT use any Japanese words, particles, or grammar—especially DO NOT use “の”. Instead of “問題裏の複合動詞の正確用法”, write “問題裏的複合動詞的正確用法”. Always use the Chinese possessive particle “的”, never the Japanese “の”. \n
+            3. The question stem must be exactly: “就以下四個選項，那個是表示問題裏的複合動詞的錯誤用法？請選擇一個最適當的答案。” \n
+            4. On the next line, provide the target compound verb in square brackets, e.g., 【引き取る】. \n
+            5. Options 1–4 must be complete sentences using that compound verb. \n
+            6. Exactly one option must contain an incorrect usage (grammatically or contextually inappropriate). The other three must be correct and natural. \n
+            7. The incorrect option should clearly violate standard usage patterns of the verb. \n
+            Critical: If you use “の” anywhere in the question stem, it is a serious error. Use only Traditional Chinese, including “的” for possession. \n
+            Example: \n
+            就以下四個選項，那個是表示問題裏的複合動詞的錯誤用法？請選擇一個最適當的答案。 \n
+            【引き取る (ひきとる)】\n
+            1. 店員：「お客様のご要望にはお応えできません。どうぞお引き取り下さい。」\n
+            2. わたしの苦手な仕事を同僚の田中さんが引き取ってくれました。\n
+            3. 不妊が発覚したのを機に、孤児院から孤児を引き取って育てる事を決めました。\n
+            4. 昨日は先輩から電子メールで重要なメッセージを引き取った。\n
             Answer: 4
             """
     }  # need to match the number of types
@@ -105,7 +135,7 @@ if advanced_count < 0:
 prompt_config = (
     "You are an experienced Japanese teacher. Create exactly {num_questions_each_type} questions " +
     "for the grammar point: **{knowledge_point}**.\n\n" +
-    "Question Format {i}: {interference_rules}\n\n" +
+    "Question Format {i} and its requirements: {interference_rules}\n\n" +
     "Generate questions with the following difficulty breakdown: " +
     "Basic ({base_count} questions), Intermediate ({intermediate_count} questions), Advanced ({advanced_count} questions):\n\n" +
     "{difficulty_levels[1]}\n{difficulty_levels[2]}\n{difficulty_levels[3]}\n\n" +
